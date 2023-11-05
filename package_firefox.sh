@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Define the directory where the extension files are located
-EXTENSION_DIR="$(pwd)/Debrid\ Media\ Manager"
+EXTENSION_DIR="$(pwd)/firefox"
+
+cp -r "$(pwd)/icons" "$EXTENSION_DIR"
+cp -r "$(pwd)/background.js" "$EXTENSION_DIR"
+cp -r "$(pwd)/content_script.js" "$EXTENSION_DIR"
 
 # Define the output directory for the packaged extension
 OUTPUT_DIR="$EXTENSION_DIR/web-ext-artifacts"

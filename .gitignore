@@ -1,2 +1,4 @@
-/web-ext-artifacts
-credentials.sh
+*/web-ext-artifacts
+firefox_credentials.sh
+*/icons
+*/*.js
