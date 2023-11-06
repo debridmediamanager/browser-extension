@@ -25,7 +25,7 @@ if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
 fi
 
 # Sign the extension
-# echo "Signing the extension..."
-# web-ext sign --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
+echo "Signing the extension..."
+web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
 
-# echo "Extension signed. Artifacts are in $OUTPUT_DIR"
+echo "Extension signed. Artifacts are in $OUTPUT_DIR"

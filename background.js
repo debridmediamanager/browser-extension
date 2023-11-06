@@ -1,18 +1,21 @@
 const DMM_HOST = "https://debridmediamanager.com";
 
 function openDMMHost() {
-	const creatingTab = chrome.tabs.create({ url: DMM_HOST });
-	creatingTab.then(
+	// In Firefox, you should use browser.tabs.create instead of chrome.tabs.create
+	browser.tabs.create({ url: DMM_HOST }).then(
 		() => {},
 		(error) => {
-			console.error(error);
+			console.error(`Error: ${error}`);
 		}
 	);
 }
 
-// Check if the browser object is available and fallback to chrome if it's not
-const browserAction =
-	typeof browser === "object" ? browser.action : chrome.action;
-
-// Add the listener for the browser action
-browserAction.onClicked.addListener(openDMMHost);
+// In Firefox, browser.browserAction should be used instead of browser.action
+// Note that Firefox supports promises for the tabs API
+if (typeof browser !== "undefined") {
+	// Use browser for Firefox
+	browser.browserAction.onClicked.addListener(openDMMHost);
+} else {
+	// Fallback to chrome for Chrome or other browsers that don't define the browser namespace
+	chrome.browserAction.onClicked.addListener(openDMMHost);
+}
