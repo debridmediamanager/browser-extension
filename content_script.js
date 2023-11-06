@@ -58,6 +58,10 @@
 		const targetElement = document.querySelector(
 			"section.ipc-page-background h1 > span"
 		);
+
+		if (targetElement && targetElement.hasAttribute('data-dmm-btn-added')) return;
+		targetElement.setAttribute('data-dmm-btn-added', 'true');
+
 		const searchUrl = `${X_DMM_HOST}/${window.location.pathname
 			.replaceAll("/", "")
 			.substring(5)}`;
@@ -68,20 +72,30 @@
 		const items = document.querySelectorAll(".lister-item-header, .dli-title");
 
 		items.forEach((item) => {
+
+			if (item && item.hasAttribute('data-dmm-btn-added')) return;
+			item.setAttribute('data-dmm-btn-added', 'true');
+
 			let link = item.querySelector('a[href^="/title/"]').href;
 			let imdbId = link.split("/").slice(-2, -1)[0];
 			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
 
 			addButtonToElement(item, SEARCH_BTN_LABEL, searchUrl);
 		});
+
+		changeObserver("ul.ipc-metadata-list", addButtonsToIMDBList);
 	}
 
-	function addButtonsToIMDBChart(disableObserver = false) {
+	function addButtonsToIMDBChart() {
 		const items = Array.from(document.querySelectorAll(".ipc-title")).filter(
 			(e) => e.innerText.match(/\d+\./) && !e.hasAttribute("data-button-added")
 		);
 
 		items.forEach((item) => {
+
+			if (item && item.hasAttribute('data-dmm-btn-added')) return;
+			item.setAttribute('data-dmm-btn-added', 'true');
+
 			let link = item.querySelector('a[href^="/title/"]').href;
 			let imdbId = link.split("/").slice(-2, -1)[0];
 			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
@@ -90,36 +104,7 @@
 			item.setAttribute("data-button-added", "true"); // Add the data attribute
 		});
 
-		if (disableObserver) return;
-
-		// Select the node that will be observed for mutations
-		const targetNode = document.querySelector("ul.ipc-metadata-list");
-
-		const config = { childList: true, subtree: true };
-
-		// Debounce timer
-		let debounceTimer;
-
-		// Callback function to execute when mutations are observed
-		const callback = function (mutationsList, observer) {
-			if (debounceTimer) {
-				clearTimeout(debounceTimer);
-			}
-
-			// Set a new timer
-			debounceTimer = setTimeout(() => {
-				// Call your userscript function here
-				observer.disconnect();
-				addButtonsToIMDBChart(true);
-				observer.observe(targetNode, config);
-			}, 250); // 250 ms delay
-		};
-
-		// Create an observer instance linked to the callback function
-		const observer = new MutationObserver(callback);
-
-		// Start observing the target node for configured mutations
-		observer.observe(targetNode, config);
+		changeObserver("ul.ipc-metadata-list", addButtonsToIMDBChart);
 	}
 
 	// MDBList functions
@@ -127,18 +112,24 @@
 		const targetElement = document.querySelector(
 			"#content-desktop-2 > div > div:nth-child(1) > h3"
 		);
-		if (targetElement) {
-			const searchUrl = `${DMM_HOST}${window.location.pathname}`;
-			addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
-		}
+
+		if (targetElement && targetElement.hasAttribute('data-dmm-btn-added')) return;
+		item.setAttribute('data-dmm-btn-added', 'true');
+
+		const searchUrl = `${DMM_HOST}${window.location.pathname}`;
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
-	function addButtonsToMDBListSearchResults(disableObserver = false) {
+	function addButtonsToMDBListSearchResults() {
 		const items = Array.from(
 			document.querySelectorAll("div.ui.centered.cards > div")
 		).filter((item) => !item.hasAttribute("data-button-added"));
 
 		items.forEach((item) => {
+
+			if (item && item.hasAttribute('data-dmm-btn-added')) return;
+			item.setAttribute('data-dmm-btn-added', 'true');
+
 			const targetElement = item.querySelector("div.header");
 			if (targetElement) {
 				const url = targetElement.parentElement
@@ -150,37 +141,29 @@
 			}
 		});
 
-		if (disableObserver) return;
+		changeObserver("div.ui.centered.cards", addButtonsToMDBListSearchResults);
+	}
 
-		// Select the node that will be observed for mutations
-		const targetNode = document.querySelector("div.ui.centered.cards");
-
+	// observer utility function
+	function changeObserver(cssSelector, addBtnFn) {
+		const targetNode = document.querySelector(cssSelector);
 		const config = { childList: true, subtree: true };
-
-		// Debounce timer
 		let debounceTimer;
-
-		// Callback function to execute when mutations are observed
 		const callback = function (mutationsList, observer) {
 			if (debounceTimer) {
 				clearTimeout(debounceTimer);
 			}
-
-			// Set a new timer
 			debounceTimer = setTimeout(() => {
-				// Call your userscript function here
 				observer.disconnect();
-				addButtonsToMDBListSearchResults(true);
+				addBtnFn();
 				observer.observe(targetNode, config);
-			}, 250); // 250 ms delay
+			}, 250);
 		};
-
-		// Create an observer instance linked to the callback function
 		const observer = new MutationObserver(callback);
-
-		// Start observing the target node for configured mutations
 		observer.observe(targetNode, config);
 	}
+
+	// Main function
 
 	const hostname = window.location.hostname;
 
