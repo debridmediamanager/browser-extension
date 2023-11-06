@@ -16,16 +16,14 @@ web-ext build --overwrite-dest --source-dir="$EXTENSION_DIR" --artifacts-dir="$O
 
 echo "Extension package created in $OUTPUT_DIR"
 
-source firefox_credentials.sh
+# source firefox_credentials.sh
 
-# Check if AMO_JWT_ISSUER and AMO_JWT_SECRET are set
-if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
-  echo "Error: AMO_JWT_ISSUER and AMO_JWT_SECRET environment variables need to be set."
-  exit 1
-fi
+# if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+#   echo "Error: AMO_JWT_ISSUER and AMO_JWT_SECRET environment variables need to be set."
+#   exit 1
+# fi
 
-# Sign the extension
-echo "Signing the extension..."
-web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
+# echo "Signing the extension..."
+# web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
 
-echo "Extension signed. Artifacts are in $OUTPUT_DIR"
+# echo "Extension signed. Artifacts are in $OUTPUT_DIR"

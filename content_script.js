@@ -65,7 +65,7 @@
 	}
 
 	function addButtonsToIMDBList() {
-		const items = document.querySelectorAll("div.lister-item-content > h3");
+		const items = document.querySelectorAll(".lister-item-header, .dli-title");
 
 		items.forEach((item) => {
 			let link = item.querySelector('a[href^="/title/"]').href;

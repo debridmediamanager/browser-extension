@@ -17,5 +17,5 @@ if (typeof browser !== "undefined") {
 	browser.browserAction.onClicked.addListener(openDMMHost);
 } else {
 	// Fallback to chrome for Chrome or other browsers that don't define the browser namespace
-	chrome.browserAction.onClicked.addListener(openDMMHost);
+	chrome.action.onClicked.addListener(openDMMHost);
 }
