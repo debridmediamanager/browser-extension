@@ -23,7 +23,7 @@ echo "Extension package created in $OUTPUT_DIR"
 #   exit 1
 # fi
 
-# echo "Signing the extension..."
+# # echo "Signing the extension..."
 # web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
 
 # echo "Extension signed. Artifacts are in $OUTPUT_DIR"

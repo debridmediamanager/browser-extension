@@ -3,7 +3,7 @@
 	"name": "Debrid Media Manager",
 	"version": "1.1.0",
 	"description": "Add accessible DMM buttons to IMDB and MDBList pages",
-	"permissions": ["tabs"],
+	"permissions": [],
 	"host_permissions": ["https://www.imdb.com/*", "https://mdblist.com/*"],
 	"content_scripts": [
 		{
