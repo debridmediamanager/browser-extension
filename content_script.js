@@ -101,7 +101,6 @@
 			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
 
 			addButtonToElement(item, SEARCH_BTN_LABEL, searchUrl);
-			item.setAttribute("data-button-added", "true"); // Add the data attribute
 		});
 
 		changeObserver("ul.ipc-metadata-list", addButtonsToIMDBChart);
@@ -114,7 +113,7 @@
 		);
 
 		if (targetElement && targetElement.hasAttribute('data-dmm-btn-added')) return;
-		item.setAttribute('data-dmm-btn-added', 'true');
+		targetElement.setAttribute('data-dmm-btn-added', 'true');
 
 		const searchUrl = `${DMM_HOST}${window.location.pathname}`;
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
@@ -137,7 +136,6 @@
 					.href.replace("https://mdblist.com/", "");
 				const searchUrl = `${DMM_HOST}/${url}`;
 				addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
-				item.setAttribute("data-button-added", "true"); // Add the data attribute
 			}
 		});
 
