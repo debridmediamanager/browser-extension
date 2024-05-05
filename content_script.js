@@ -151,23 +151,24 @@
 		if (targetElement && targetElement.hasAttribute('data-dmm-btn-added')) return;
 		targetElement.setAttribute('data-dmm-btn-added', 'true');
 
-		const searchUrl = `${DMM_HOST}${window.location.pathname
+		const searchUrl = `${DMM_HOST}/${window.location.pathname
 			.replaceAll("/", "")
-			.replace('anime', 'anidb-')}`;
+			.replace('anime', 'anime/anidb-')}`;
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
 	function addButtonsToAniDBAnyPage() {
-		const items = document.querySelectorAll("div.wrap.name > a.name-colored");
+		const items = Array.from(document.querySelectorAll("a"));
 
 		items
 			.filter(item => item.href.includes('/anime/') && !item.hasAttribute('data-dmm-btn-added'))
 			.forEach((item) => {
 				item.setAttribute('data-dmm-btn-added', 'true');
 
-				const searchUrl = `${DMM_HOST}${item.href
+				const searchUrl = `${DMM_HOST}/${item.href
+					.replace('https://anidb.net/', '')
 					.replaceAll("/", "")
-					.replace('anime', 'anidb-')}`;
+					.replace('anime', 'anime/anidb-')}`;
 
 				addButtonToElement(item, SEARCH_BTN_LABEL, searchUrl);
 			});
@@ -236,7 +237,7 @@
 			addButtonsToIMDBChart();
 		}
 	} else if (hostname === "anidb.net") {
-		const isAniDBSingleTitlePage = /^\/anime\//.test(
+		const isAniDBSingleTitlePage = /^\/anime\/\d+/.test(
 			location.pathname
 		);
 
