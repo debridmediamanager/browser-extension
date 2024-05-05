@@ -87,7 +87,7 @@
 	}
 
 	function addButtonsToIMDBChart() {
-		const items = Array.from(document.querySelectorAll(".ipc-title")).filter(
+		const items = Array.from(document.querySelectorAll(".cli-title")).filter(
 			(e) => e.innerText.match(/\d+\./) && !e.hasAttribute("data-button-added")
 		);
 
@@ -142,6 +142,37 @@
 		changeObserver("div.ui.centered.cards", addButtonsToMDBListSearchResults);
 	}
 
+	// AniDB functions
+	function addButtonsToAniDBSingleTitle() {
+		const targetElement = document.querySelector(
+			"#layout-main > h1.anime"
+		);
+
+		if (targetElement && targetElement.hasAttribute('data-dmm-btn-added')) return;
+		targetElement.setAttribute('data-dmm-btn-added', 'true');
+
+		const searchUrl = `${DMM_HOST}${window.location.pathname
+			.replaceAll("/", "")
+			.replace('anime', 'anidb-')}`;
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
+	}
+
+	function addButtonsToAniDBAnyPage() {
+		const items = document.querySelectorAll("div.wrap.name > a.name-colored");
+
+		items
+			.filter(item => item.href.includes('/anime/') && !item.hasAttribute('data-dmm-btn-added'))
+			.forEach((item) => {
+				item.setAttribute('data-dmm-btn-added', 'true');
+
+				const searchUrl = `${DMM_HOST}${item.href
+					.replaceAll("/", "")
+					.replace('anime', 'anidb-')}`;
+
+				addButtonToElement(item, SEARCH_BTN_LABEL, searchUrl);
+			});
+	}
+
 	// observer utility function
 	function changeObserver(cssSelector, addBtnFn) {
 		const targetNode = document.querySelector(cssSelector);
@@ -188,6 +219,31 @@
 			addButtonsToMDBListSingleTitle();
 		} else {
 			addButtonsToMDBListSearchResults();
+		}
+	} else if (hostname === "m.imdb.com") {
+		console.log('m.imdb.com')
+		const isIMDBSingleTitlePage = /^\/title\//.test(location.pathname);
+		const isIMDBListPage =
+			/^\/search\//.test(location.pathname) ||
+			/^\/list\/ls/.test(location.pathname);
+		const isIMDBChartPage = /^\/chart\//.test(location.pathname);
+
+		if (isIMDBSingleTitlePage) {
+			addButtonsToIMDBSingleTitle();
+		} else if (isIMDBListPage) {
+			addButtonsToIMDBList();
+		} else if (isIMDBChartPage) {
+			addButtonsToIMDBChart();
+		}
+	} else if (hostname === "anidb.net") {
+		const isAniDBSingleTitlePage = /^\/anime\//.test(
+			location.pathname
+		);
+
+		if (isAniDBSingleTitlePage) {
+			addButtonsToAniDBSingleTitle();
+		} else {
+			addButtonsToAniDBAnyPage();
 		}
 	}
 })();

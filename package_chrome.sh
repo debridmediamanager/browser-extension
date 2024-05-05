@@ -12,6 +12,6 @@ OUTPUT_DIR="$EXTENSION_DIR/web-ext-artifacts"
 
 # Package the extension
 echo "Packaging the extension..."
-web-ext build --overwrite-dest --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --ignore-files="create_icons.sh logo.svg *.md"
+./node_modules/.bin/web-ext build --overwrite-dest --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --ignore-files="create_icons.sh logo.svg *.md"
 
 echo "Extension package created in $OUTPUT_DIR"

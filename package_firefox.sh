@@ -12,7 +12,7 @@ OUTPUT_DIR="$EXTENSION_DIR/web-ext-artifacts"
 
 # Package the extension
 echo "Packaging the extension..."
-web-ext build --overwrite-dest --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --ignore-files="create_icons.sh logo.svg *.md"
+./node_modules/.bin/web-ext build --overwrite-dest --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --ignore-files="create_icons.sh logo.svg *.md"
 
 echo "Extension package created in $OUTPUT_DIR"
 
@@ -24,6 +24,6 @@ echo "Extension package created in $OUTPUT_DIR"
 # fi
 
 # # echo "Signing the extension..."
-# web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
+# ./node_modules/.bin/web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
 
 # echo "Extension signed. Artifacts are in $OUTPUT_DIR"
