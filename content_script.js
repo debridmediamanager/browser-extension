@@ -1,6 +1,6 @@
 (function () {
 	"use strict";
-	const DMM_HOST = "https://debridmediamanager.com";
+	const DMM_HOST = "https://beta.debridmediamanager.com";
 	const X_DMM_HOST = "https://x.debridmediamanager.com";
 	const SEARCH_BTN_LABEL = "DMM🔎";
 
@@ -161,7 +161,7 @@
 		const items = Array.from(document.querySelectorAll("a"));
 
 		items
-			.filter(item => item.href.includes('/anime/') && !item.hasAttribute('data-dmm-btn-added'))
+			.filter(item => /anime\/\d+$/.test(item.href) && item.innerText && !item.hasAttribute('data-dmm-btn-added'))
 			.forEach((item) => {
 				item.setAttribute('data-dmm-btn-added', 'true');
 
@@ -172,6 +172,25 @@
 
 				addButtonToElement(item, SEARCH_BTN_LABEL, searchUrl);
 			});
+	}
+
+	// TraktTV functions
+	function addButtonsToTraktTVSingleTitle() {
+		const targetElement = document.querySelector(
+			"#summary-wrapper div > h1"
+		);
+
+		if (targetElement && targetElement.hasAttribute('data-dmm-btn-added')) return;
+		// find imdb id in page, <a data-type="imdb">
+		const imdbId = document.querySelector('a#external-link-imdb')?.href?.split('/').pop();
+		if (!imdbId) return;
+
+		targetElement.setAttribute('data-dmm-btn-added', 'true');
+
+		const searchUrl = `${DMM_HOST}/${window.location.pathname
+			.replace("/movies/", "/movie/")
+			.replace("/shows/", "/show/")}${imdbId}`;
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
 	// observer utility function
@@ -243,8 +262,15 @@
 
 		if (isAniDBSingleTitlePage) {
 			addButtonsToAniDBSingleTitle();
-		} else {
-			addButtonsToAniDBAnyPage();
+		}
+		addButtonsToAniDBAnyPage();
+	} else if (hostname === "trakt.tv") {
+		const isTraktTVSinglePage = /^\/(shows|movies)\/.+/.test(
+			location.pathname
+		);
+
+		if (isTraktTVSinglePage) {
+			addButtonsToTraktTVSingleTitle();
 		}
 	}
 })();
