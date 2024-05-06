@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "Debrid Media Manager",
 	"version": "1.3.0",
-	"description": "Add accessible DMM buttons to IMDB, MDBList and AniDB pages",
+	"description": "Add accessible DMM buttons to IMDB, MDBList, AniDB and TraktTV pages",
 	"permissions": [],
 	"host_permissions": ["https://www.imdb.com/*", "https://mdblist.com/*", "https://anidb.net/*", "https://trakt.tv/*"],
 	"content_scripts": [
