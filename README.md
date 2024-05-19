@@ -41,8 +41,10 @@ URLs for testing:
 - https://trakt.tv/movies/ghostbusters-frozen-empire-2024
 - https://trakt.tv/shows/shogun-2024/seasons/1
 
-- https://www.icheckmovies.com/movies/fight+club/ -- not working
-- https://www.icheckmovies.com/lists/imdbs+top+250/ -- not working
+- https://www.icheckmovies.com/movies/fight+club/
+- https://www.icheckmovies.com/lists/imdbs+top+250/
+- https://beta.icheckmovies.com/movies/1-the+shawshank+redemption
+- https://beta.icheckmovies.com/lists/1-imdbs+top+250
 
 - https://myanimelist.net/ -- not working
 - https://myanimelist.net/anime/50410/One_Piece_Film__Red -- not working

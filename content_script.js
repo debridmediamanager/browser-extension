@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.4.0
+// @version      1.5.0
 // @description  Add accessible DMM buttons to IMDB, MDBList, AniDB, etc.
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -272,11 +272,6 @@
 
 		const searchUrl = `${X_DMM_HOST}/${imdbId}`;
 		addLinkToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
-
-		changeObserver(
-			"#app section.hero",
-			addButtonsToiCheckMoviesBetaSingleTitle
-		);
 	}
 
 	function addButtonsToiCheckMoviesList() {
@@ -324,6 +319,23 @@
 			"#app section.section div.columns",
 			addButtonsToiCheckMoviesBetaList
 		);
+	}
+
+	// letterboxd functions
+	function addButtonsToLetterboxdSingleTitle() {
+		const imdbId = document
+			.querySelector("a[data-track-action='IMDb']")
+			?.href?.match(/tt\d+/)?.[0];
+		if (!imdbId) return;
+
+		const targetElement = document.querySelector("h1.filmtitle");
+
+		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
+			return;
+		targetElement.setAttribute("data-dmm-btn-added", "true");
+
+		const searchUrl = `${X_DMM_HOST}/${imdbId}`;
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
 	// observer utility function
@@ -439,8 +451,14 @@
 	} else if (hostname === "myanimelist.net") {
 		///// KITSU /////
 	} else if (hostname === "kitsu.io") {
+
 		///// LETTERBOXD /////
 	} else if (hostname === "letterboxd.com") {
+		const isLetterboxdSingleTitlePage = /^\/film\//.test(location.pathname);
+		if (isLetterboxdSingleTitlePage) {
+			addButtonsToLetterboxdSingleTitle();
+		}
+
 		///// JUSTWATCH /////
 	} else if (hostname === "www.justwatch.com") {
 		///// TVDB /////
