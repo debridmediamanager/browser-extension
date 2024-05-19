@@ -1,3 +1,23 @@
+// ==UserScript==
+// @name         Debrid Media Manager
+// @namespace    https://debridmediamanager.com
+// @version      1.4.0
+// @description  Add accessible DMM buttons to IMDB, MDBList, AniDB, etc.
+// @author       Ben Adrian Sarmiento <me@bensarmiento.com>
+// @license      MIT
+// @match        *://*.anidb.net/*
+// @match        *://*.icheckmovies.com/*
+// @match        *://*.imdb.com/*
+// @match        *://*.justwatch.com/*
+// @match        *://*.kitsu.io/*
+// @match        *://*.letterboxd.com/*
+// @match        *://*.mdblist.com/*
+// @match        *://*.myanimelist.net/*
+// @match        *://*.themoviedb.org/*
+// @match        *://*.thetvdb.com/*
+// @match        *://*.trakt.tv/*
+// ==/UserScript==
+
 (function () {
 	"use strict";
 	const DMM_HOST = "https://debridmediamanager.com";

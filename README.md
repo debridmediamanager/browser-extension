@@ -39,8 +39,7 @@ URLs for testing:
 
 - https://trakt.tv/shows/fallout
 - https://trakt.tv/movies/ghostbusters-frozen-empire-2024
-- https://trakt.tv/shows/shogun-2024/seasons/1 -- not working
-- https://trakt.tv/shows/blue-planet-ii/seasons/1/episodes/1 -- not working
+- https://trakt.tv/shows/shogun-2024/seasons/1
 
 - https://www.icheckmovies.com/movies/fight+club/ -- not working
 - https://www.icheckmovies.com/lists/imdbs+top+250/ -- not working
@@ -63,3 +62,8 @@ URLs for testing:
 
 - https://www.themoviedb.org/tv/17937-ghost-adventures
 - https://www.themoviedb.org/movie/823464-godzilla-x-kong-the-new-empire
+
+- https://kitsu.io/anime/one-piece
+- https://kitsu.io/anime/attack-on-titan
+- https://kitsu.io/anime/sousou-no-frieren/episodes/1
+- https://kitsu.io/anime/one-piece-episode-of-chopper-plus-fuyu-ni-saku-kiseki-no-sakura
