@@ -53,8 +53,8 @@ URLs for testing:
 - https://myanimelist.net/topanime.php?type=airing -- not working
 - https://myanimelist.net/topanime.php?type=bypopularity -- not working
 
-- https://letterboxd.com/film/the-idea-of-you-2024/ -- not working
-- https://letterboxd.com/film/furiosa-a-mad-max-saga/ -- not working
+- https://letterboxd.com/film/the-idea-of-you-2024/
+- https://letterboxd.com/film/furiosa-a-mad-max-saga/
 
 - https://www.justwatch.com/us/tv-show/ripley -- not working
 - https://www.justwatch.com/de/Film/Avatar-Aufbruch-nach-Pandora -- not working
@@ -62,10 +62,10 @@ URLs for testing:
 - https://www.justwatch.com/ph/tv-show/x-men-97 -- not working
 - https://www.justwatch.com/ph/tv-show/x-men-97/season-1 -- not working
 
-- https://www.themoviedb.org/tv/17937-ghost-adventures
-- https://www.themoviedb.org/movie/823464-godzilla-x-kong-the-new-empire
+- https://www.themoviedb.org/tv/17937-ghost-adventures -- not working
+- https://www.themoviedb.org/movie/823464-godzilla-x-kong-the-new-empire -- not working
 
-- https://kitsu.io/anime/one-piece
-- https://kitsu.io/anime/attack-on-titan
-- https://kitsu.io/anime/sousou-no-frieren/episodes/1
-- https://kitsu.io/anime/one-piece-episode-of-chopper-plus-fuyu-ni-saku-kiseki-no-sakura
+- https://kitsu.io/anime/one-piece -- not working
+- https://kitsu.io/anime/attack-on-titan -- not working
+- https://kitsu.io/anime/sousou-no-frieren/episodes/1 -- not working
+- https://kitsu.io/anime/one-piece-episode-of-chopper-plus-fuyu-ni-saku-kiseki-no-sakura -- not working

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.5.0
+// @version      1.5.1
 // @description  Add accessible DMM buttons to IMDB, MDBList, AniDB, etc.
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -208,7 +208,7 @@
 
 	function addButtonsToAniDBAnyPage() {
 		const items = Array.from(document.querySelectorAll("a")).filter(
-			(item) => !item.hasAttribute("data-dmm-btn-added")
+			(item) => item.innerText.trim() && /\/anime\/\d+$/.test(item.href) && !item.hasAttribute("data-dmm-btn-added")
 		);
 
 		items.forEach((item) => {
