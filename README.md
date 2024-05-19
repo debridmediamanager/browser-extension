@@ -20,7 +20,7 @@ URLs for testing:
 
 - https://m.imdb.com/title/tt9784708/
 - https://m.imdb.com/title/tt21261712/
-- https://m.imdb.com/list/ls540852272/ -- not working
+- https://m.imdb.com/list/ls540852272/
 - https://m.imdb.com/chart/top/
 - https://m.imdb.com/chart/toptv/
 
@@ -37,10 +37,10 @@ URLs for testing:
 - https://anidb.net/anime/?h=1&noalias=1&orderby.name=0.1&view=smallgrid
 - https://anidb.net/anime/17617
 
-- https://trakt.tv/shows/fallout -- not working
-- https://trakt.tv/shows/blue-planet-ii/seasons/1 -- not working
-- https://trakt.tv/shows/fallout/seasons/1 -- not working
-- https://trakt.tv/movies/ghostbusters-frozen-empire-2024 -- not working
+- https://trakt.tv/shows/fallout
+- https://trakt.tv/movies/ghostbusters-frozen-empire-2024
+- https://trakt.tv/shows/shogun-2024/seasons/1 -- not working
+- https://trakt.tv/shows/blue-planet-ii/seasons/1/episodes/1 -- not working
 
 - https://www.icheckmovies.com/movies/fight+club/ -- not working
 - https://www.icheckmovies.com/lists/imdbs+top+250/ -- not working

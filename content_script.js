@@ -182,14 +182,12 @@
 
 		if (targetElement && targetElement.hasAttribute('data-dmm-btn-added')) return;
 		// find imdb id in page, <a data-type="imdb">
-		const imdbId = document.querySelector('a#external-link-imdb')?.href?.split('/').pop();
+		const imdbId = document.querySelector('a#external-link-imdb')?.href?.match(/tt\d+/)?.[0];
 		if (!imdbId) return;
 
 		targetElement.setAttribute('data-dmm-btn-added', 'true');
 
-		const searchUrl = `${DMM_HOST}/${window.location.pathname
-			.replace("/movies/", "/movie/")
-			.replace("/shows/", "/show/")}${imdbId}`;
+		const searchUrl = `${X_DMM_HOST}/${imdbId}`;
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
@@ -267,6 +265,9 @@
 		}
 		addButtonsToAniDBAnyPage();
 	} else if (hostname === "trakt.tv") {
+		const isTraktTVEpisodePage = /\/episodes\/\d/.test(location.pathname);
+		if (isTraktTVEpisodePage) return;
+
 		const isTraktTVSinglePage = /^\/(shows|movies)\/.+/.test(
 			location.pathname
 		);
