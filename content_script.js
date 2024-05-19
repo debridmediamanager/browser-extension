@@ -69,7 +69,7 @@
 	}
 
 	function addButtonsToIMDBList() {
-		const items = document.querySelectorAll(".lister-item-header, .dli-title");
+		const items = document.querySelectorAll(".lister-item .lister-item-header, .lister-item .media");
 
 		items.forEach((item) => {
 
@@ -196,6 +196,7 @@
 	// observer utility function
 	function changeObserver(cssSelector, addBtnFn) {
 		const targetNode = document.querySelector(cssSelector);
+		if (!targetNode) return;
 		const config = { childList: true, subtree: true };
 		let debounceTimer;
 		const callback = function (mutationsList, observer) {
@@ -203,6 +204,7 @@
 				clearTimeout(debounceTimer);
 			}
 			debounceTimer = setTimeout(() => {
+				// if (!targetNode) return;
 				observer.disconnect();
 				addBtnFn();
 				observer.observe(targetNode, config);
@@ -272,5 +274,5 @@
 		if (isTraktTVSinglePage) {
 			addButtonsToTraktTVSingleTitle();
 		}
-	}
+	} else if (hostname === "www.themoviedb.org") {}
 })();
