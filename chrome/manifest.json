@@ -1,13 +1,33 @@
 {
 	"manifest_version": 3,
 	"name": "Debrid Media Manager",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"description": "Add accessible DMM buttons to IMDB, MDBList, AniDB and TraktTV pages",
 	"permissions": [],
-	"host_permissions": ["https://www.imdb.com/*", "https://mdblist.com/*", "https://anidb.net/*", "https://trakt.tv/*"],
+	"host_permissions": [
+		"https://www.imdb.com/*",
+		"https://m.imdb.com/*",
+		"https://mdblist.com/*",
+		"https://anidb.net/*",
+		"https://trakt.tv/*",
+		"https://icheckmovies.com/*",
+		"https://myanimelist.net/*",
+		"https://letterboxd.com/*",
+		"https://www.justwatch.com/*"
+	],
 	"content_scripts": [
 		{
-			"matches": ["https://www.imdb.com/*", "https://mdblist.com/*", "https://anidb.net/*", "https://trakt.tv/*"],
+			"matches": [
+				"https://www.imdb.com/*",
+				"https://m.imdb.com/*",
+				"https://mdblist.com/*",
+				"https://anidb.net/*",
+				"https://trakt.tv/*",
+				"https://icheckmovies.com/*",
+				"https://myanimelist.net/*",
+				"https://letterboxd.com/*",
+				"https://www.justwatch.com/*"
+			],
 			"js": ["content_script.js"]
 		}
 	],

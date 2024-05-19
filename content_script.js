@@ -1,6 +1,6 @@
 (function () {
 	"use strict";
-	const DMM_HOST = "https://beta.debridmediamanager.com";
+	const DMM_HOST = "https://debridmediamanager.com";
 	const X_DMM_HOST = "https://x.debridmediamanager.com";
 	const SEARCH_BTN_LABEL = "DMM🔎";
 
