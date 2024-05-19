@@ -216,6 +216,7 @@
 
 	const hostname = window.location.hostname;
 
+	///// IMDB /////
 	if (hostname === "www.imdb.com") {
 		const isIMDBSingleTitlePage = /^\/title\//.test(location.pathname);
 		const isIMDBListPage =
@@ -230,16 +231,8 @@
 		} else if (isIMDBChartPage) {
 			addButtonsToIMDBChart();
 		}
-	} else if (hostname === "mdblist.com") {
-		const isMDBListSingleTitlePage = /^\/(movie|show)\//.test(
-			location.pathname
-		);
 
-		if (isMDBListSingleTitlePage) {
-			addButtonsToMDBListSingleTitle();
-		} else {
-			addButtonsToMDBListSearchResults();
-		}
+	///// IMDB MOBILE /////
 	} else if (hostname === "m.imdb.com") {
 		console.log('m.imdb.com')
 		const isIMDBSingleTitlePage = /^\/title\//.test(location.pathname);
@@ -255,6 +248,20 @@
 		} else if (isIMDBChartPage) {
 			addButtonsToIMDBChart();
 		}
+
+	///// MDBLIST /////
+	} else if (hostname === "mdblist.com") {
+		const isMDBListSingleTitlePage = /^\/(movie|show)\//.test(
+			location.pathname
+		);
+
+		if (isMDBListSingleTitlePage) {
+			addButtonsToMDBListSingleTitle();
+		} else {
+			addButtonsToMDBListSearchResults();
+		}
+
+	///// ANIDB /////
 	} else if (hostname === "anidb.net") {
 		const isAniDBSingleTitlePage = /^\/anime\/\d+/.test(
 			location.pathname
@@ -264,6 +271,8 @@
 			addButtonsToAniDBSingleTitle();
 		}
 		addButtonsToAniDBAnyPage();
+
+	///// TRAKT TV /////
 	} else if (hostname === "trakt.tv") {
 		const isTraktTVEpisodePage = /\/episodes\/\d/.test(location.pathname);
 		if (isTraktTVEpisodePage) return;
@@ -275,5 +284,27 @@
 		if (isTraktTVSinglePage) {
 			addButtonsToTraktTVSingleTitle();
 		}
-	} else if (hostname === "www.themoviedb.org") {}
+
+	///// ICHECKMOVIES /////
+	} else if (hostname === "icheckmovies.com") {
+
+	///// MYANIMELIST /////
+	} else if (hostname === "myanimelist.net") {
+
+	///// KITSU /////
+	} else if (hostname === "kitsu.io") {
+
+	///// LETTERBOXD /////
+	} else if (hostname === "letterboxd.com") {
+
+	///// JUSTWATCH /////
+	} else if (hostname === "www.justwatch.com") {
+
+	///// TVDB /////
+	} else if (hostname === "www.thetvdb.com") {
+
+	///// TMDB /////
+	} else if (hostname === "www.themoviedb.org") {
+
+	}
 })();

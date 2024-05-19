@@ -12,8 +12,11 @@
 		"https://trakt.tv/*",
 		"https://icheckmovies.com/*",
 		"https://myanimelist.net/*",
+		"https://kitsu.io/*",
 		"https://letterboxd.com/*",
-		"https://www.justwatch.com/*"
+		"https://www.justwatch.com/*",
+		"https://www.thetvdb.com/*",
+		"https://www.themoviedb.org/*"
 	],
 	"content_scripts": [
 		{
@@ -25,8 +28,11 @@
 				"https://trakt.tv/*",
 				"https://icheckmovies.com/*",
 				"https://myanimelist.net/*",
+				"https://kitsu.io/*",
 				"https://letterboxd.com/*",
-				"https://www.justwatch.com/*"
+				"https://www.justwatch.com/*",
+				"https://www.thetvdb.com/*",
+				"https://www.themoviedb.org/*"
 			],
 			"js": ["content_script.js"]
 		}
