@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Debrid Media Manager",
-    "version": "1.6.1",
+    "version": "1.6.2",
     "description": "Add accessible DMM buttons to IMDB, MDBList, AniDB, TraktTV, and Bittorrent sites with magnet links",
     "content_scripts": [
         {
@@ -20,7 +20,7 @@
             "48": "icons/icon48.png",
             "128": "icons/icon128.png"
         },
-        "default_title": "Open Debrid Media Manager"
+        "default_title": "Debrid Media Manager"
     },
     "icons": {
         "16": "icons/icon16.png",

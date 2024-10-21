@@ -1,5 +1,5 @@
 {
-  "version": "1.6.1",
+  "version": "1.6.2",
   "dependencies": {
     "prettier": "^3.3.3",
     "terser": "^5.36.0",
