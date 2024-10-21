@@ -1,25 +1,17 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.5.1
+// @version      1.6.0
 // @description  Add accessible DMM buttons to IMDB, MDBList, AniDB, etc.
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
-// @match        *://*.anidb.net/*
-// @match        *://*.icheckmovies.com/*
-// @match        *://*.imdb.com/*
-// @match        *://*.justwatch.com/*
-// @match        *://*.kitsu.io/*
-// @match        *://*.letterboxd.com/*
-// @match        *://*.mdblist.com/*
-// @match        *://*.myanimelist.net/*
-// @match        *://*.themoviedb.org/*
-// @match        *://*.thetvdb.com/*
-// @match        *://*.trakt.tv/*
+// @match        *://*/*
+// @grant        none
 // ==/UserScript==
 
 (function () {
 	"use strict";
+
 	const DMM_HOST = "https://debridmediamanager.com";
 	const X_DMM_HOST = "https://x.debridmediamanager.com";
 	const SEARCH_BTN_LABEL = "DMM🔎";
@@ -98,6 +90,16 @@
 		const button = createLink(text, url);
 		element.appendChild(button);
 	}
+
+
+    function getInfoHashFromMagnetLink(magnetLink) {
+        const urlParams = new URLSearchParams(magnetLink.substring(magnetLink.indexOf('?')));
+        const xt = urlParams.get('xt');
+        if (xt && xt.startsWith('urn:btih:')) {
+            return xt.substring(9); // Remove 'urn:btih:'
+        }
+        return null;
+    }
 
 	// IMDB functions
 	function addButtonsToIMDBSingleTitle() {
@@ -359,7 +361,22 @@
 		observer.observe(targetNode, config);
 	}
 
+	function addMagnetLinkButtonToElements(elements) {
+		elements.forEach(function(link) {
+			const magnetURL = link.href;
+			const infoHash = getInfoHashFromMagnetLink(magnetURL);
+			if (infoHash) {
+				const buttonURL = `https://debridmediamanager.com/library?addMagnet=${infoHash}`;
+				const button = createButton("DMM🧲", buttonURL);
+				link.parentNode.insertBefore(button, link.nextSibling);
+			}
+		});
+	}
+
 	// Main function
+
+	const magnetLinks = document.querySelectorAll('a[href^="magnet:?"]');
+	addMagnetLinkButtonToElements(magnetLinks);
 
 	const hostname = window.location.hostname;
 

@@ -1,6 +1,9 @@
 {
-  "version": "1.5.1",
+  "version": "1.6.0",
   "dependencies": {
-    "web-ext": "^7.10.0"
+    "web-ext": "^8.3.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
   }
 }
