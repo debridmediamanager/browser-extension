@@ -1,9 +1,8 @@
 {
   "version": "1.6.1",
   "dependencies": {
+    "prettier": "^3.3.3",
+    "terser": "^5.36.0",
     "web-ext": "^8.3.0"
-  },
-  "devDependencies": {
-    "prettier": "^3.3.3"
   }
 }
