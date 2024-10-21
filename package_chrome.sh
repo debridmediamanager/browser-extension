@@ -6,6 +6,8 @@ EXTENSION_DIR="$(pwd)/chrome"
 cp -fr "$(pwd)/icons" "$EXTENSION_DIR"
 cp -fr "$(pwd)/background.js" "$EXTENSION_DIR"
 cp -fr "$(pwd)/content_script.js" "$EXTENSION_DIR"
+cp -fr "$(pwd)/manifest.json" "$EXTENSION_DIR"
+jq 'del(.applications)' "$EXTENSION_DIR/manifest.json" > "$EXTENSION_DIR/manifest.tmp.json" && mv "$EXTENSION_DIR/manifest.tmp.json" "$EXTENSION_DIR/manifest.json"
 
 # Define the output directory for the packaged extension
 OUTPUT_DIR="$EXTENSION_DIR/web-ext-artifacts"

@@ -3,3 +3,4 @@ firefox_credentials.sh
 */icons
 */*.js
 node_modules
+*/manifest.json
