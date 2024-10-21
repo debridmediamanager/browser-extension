@@ -4,3 +4,13 @@ firefox_credentials.sh
 */*.js
 node_modules
 */manifest.json
+
+.DS_Store
+*/.DS_Store
+*/.DS_Store?
+*/._*
+*/.Spotlight-V100
+*/.Trashes
+
+.amo-upload-uuid
+*/.amo-upload-uuid
