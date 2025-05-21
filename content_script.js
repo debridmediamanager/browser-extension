@@ -330,9 +330,9 @@
 			?.href?.match(/tt\d+/)?.[0];
 		if (!imdbId) return;
 
-		const targetElement = document.querySelector("h1.filmtitle");
+		const targetElement = document.querySelector("div.details");
 
-		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added"))
 			return;
 		targetElement.setAttribute("data-dmm-btn-added", "true");
 
