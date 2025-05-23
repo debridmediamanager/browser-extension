@@ -340,6 +340,56 @@
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
+	// TMDB functions
+	async function addButtonsToTMDB() {
+		const targetElement = document.querySelector("div.facts");
+	        if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added"))
+	            return;
+	
+	        // Extract TMDB ID from current page URL
+	        const tmdbId = extractTMDBId();
+	        if (!tmdbId) {
+	            return;
+	        }
+	
+	        // Determine if it's a movie or TV show based on URL
+	        const isTV = window.location.pathname.includes('/tv/');
+	        const mediaType = isTV ? 'tv' : 'movie';
+	
+	        try {
+	            // Fetch external IDs from TMDB API
+	            // TODO: Probably something about this key
+	            const apiKey = '8d6d91941230817f7807d643736e8a49';
+	            const apiUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${apiKey}`;
+	
+	            const response = await fetch(apiUrl);
+	            if (!response.ok) {
+	                throw new Error(`API request failed: ${response.status}`);
+	            }
+	
+	            const data = await response.json();
+	            const imdbId = data.imdb_id;
+	
+	            if (!imdbId) {
+	                console.warn('No IMDb ID found for this title');
+	                return;
+	            }
+	
+	            // Mark as processed and add button
+	            targetElement.setAttribute("data-dmm-btn-added", "true");
+	            const searchUrl = `${X_DMM_HOST}/${imdbId}`;
+	            addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
+	
+	        } catch (error) {
+	            console.error('Error fetching IMDb ID:', error);
+	        }
+	    }
+	
+	    function extractTMDBId() {
+	        const pathMatch = window.location.pathname.match(/\/(movie|tv)\/(\d+)/);
+	        return pathMatch ? pathMatch[2] : null;
+	    }
+
 	// observer utility function
 	function changeObserver(cssSelector, addBtnFn) {
 		const targetNode = document.querySelector(cssSelector);
@@ -482,5 +532,8 @@
 	} else if (hostname === "www.thetvdb.com") {
 		///// TMDB /////
 	} else if (hostname === "www.themoviedb.org") {
+		addButtonsToTMDB().catch(error => {
+            		console.warn('Failed to add TMDB buttons:', error);
+        	});
 	}
 })();
