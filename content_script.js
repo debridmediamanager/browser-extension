@@ -2,7 +2,7 @@
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
 // @version      1.6.2
-// @description  Add accessible DMM buttons to IMDB, MDBList, AniDB, TraktTV, and Bittorrent sites with magnet links
+// @description  Add accessible DMM buttons to IMDB, MDBList, AniDB, TraktTV, letterboxd, TMDB and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
 // @match        *://*/*
@@ -340,6 +340,49 @@
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
+	   // TMDB functions
+    async function addButtonsToTMDB() {
+        const targetElement = document.querySelector("div.facts");
+        if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added"))
+            return;
+
+        // Extract TMDB ID from current page URL
+        const tmdbId = extractTMDBId();
+        if (!tmdbId) {
+            return;
+        }
+
+        // Determine if it's a movie or TV show based on URL
+        const isTV = window.location.pathname.includes('/tv/');
+        const mediaType = isTV ? 'tv' : 'movie';
+
+        // Fetch external IDs from TMDB API
+        const apiKey = '8d6d91941230817f7807d643736e8a49';
+        const apiUrl = `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/external_ids?api_key=${apiKey}`;
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const imdbId = data.imdb_id;
+
+        if (!imdbId) {
+            return;
+        }
+
+        // Mark as processed and add button
+        targetElement.setAttribute("data-dmm-btn-added", "true");
+        const searchUrl = `${X_DMM_HOST}/${imdbId}`;
+        addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
+    }
+
+    function extractTMDBId() {
+        const pathMatch = window.location.pathname.match(/\/(movie|tv)\/(\d+)/);
+        return pathMatch ? pathMatch[2] : null;
+    }
+
 	// observer utility function
 	function changeObserver(cssSelector, addBtnFn) {
 		const targetNode = document.querySelector(cssSelector);
@@ -482,5 +525,6 @@
 	} else if (hostname === "www.thetvdb.com") {
 		///// TMDB /////
 	} else if (hostname === "www.themoviedb.org") {
+		addButtonsToTMDB()
 	}
 })();
