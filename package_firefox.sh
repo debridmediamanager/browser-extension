@@ -16,15 +16,14 @@ echo "Packaging the extension..."
 
 echo "Extension package created in $OUTPUT_DIR"
 
-# uncomment the following lines to sign and publish the extension on AMO
-source firefox_credentials.sh
-
-if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
-  echo "Error: AMO_JWT_ISSUER and AMO_JWT_SECRET environment variables need to be set."
-  exit 1
+# Optional: sign and publish on AMO if credentials are available
+if [ -f firefox_credentials.sh ]; then
+  source firefox_credentials.sh
 fi
 
-# echo "Signing the extension..."
-./node_modules/.bin/web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
-
-# # echo "Extension signed. Artifacts are in $OUTPUT_DIR"
+if [ -n "$AMO_JWT_ISSUER" ] && [ -n "$AMO_JWT_SECRET" ]; then
+  echo "Signing the extension..."
+  ./node_modules/.bin/web-ext sign --channel listed --source-dir="$EXTENSION_DIR" --artifacts-dir="$OUTPUT_DIR" --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET"
+else
+  echo "Skipping signing (AMO credentials not found)"
+fi
