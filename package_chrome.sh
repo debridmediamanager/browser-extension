@@ -4,7 +4,7 @@
 EXTENSION_DIR="$(pwd)/chrome"
 
 cp -fr "$(pwd)/icons" "$EXTENSION_DIR"
-./node_modules/.bin/terser "$(pwd)/content_script.js" -o "$EXTENSION_DIR/content_script.js"
+cp -f "$(pwd)/content_script.js" "$EXTENSION_DIR/content_script.js"
 cp -fr "$(pwd)/manifest.json" "$EXTENSION_DIR"
 
 # Define the output directory for the packaged extension

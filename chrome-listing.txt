@@ -1,0 +1,46 @@
+Description:
+Debrid Media Manager allows you to curate a media library of unlimited size. This browser extension simplifies the process for curators by adding DMM buttons directly to popular platforms and torrent indexers.
+
+Simply search for the movie or TV show you want on any of these supported sites and instantly add it to your DMM library:
+
+- IMDB — single titles, lists, and chart pages
+- MDBList — single titles, search results, and lists
+- TraktTV — movies and shows
+- iCheckMovies — single titles and lists
+- Letterboxd — single film pages
+- JustWatch — movies and TV shows
+- TheTVDB — movies and series
+- Criticker — single film pages
+- Metacritic — movies and TV shows
+- Any site with magnet links — adds a button next to each magnet link (e.g., 1337x, Nyaa, Torrentgalaxy)
+
+With MDBList, you can filter content using specific criteria, such as IMDB scores or country of origin, helping you discover new favorites. Experience a streamlined way to build and enjoy your media collection.
+
+Category:
+Fun
+
+Language:
+English (US)
+
+Homepage URL:
+https://debridmediamanager.com/
+
+Support URL:
+https://github.com/debridmediamanager/browser-extension/issues
+
+Mature content:
+No
+
+--- Privacy practices tab ---
+
+Single purpose description:
+Adds DMM (Debrid Media Manager) buttons to movie and TV show database sites so users can quickly add titles to their DMM library.
+
+Host permission justification:
+The extension uses the <all_urls> host permission because it needs to detect magnet links on any website. Magnet links can appear on any domain, so the extension must run on all pages to find and add DMM buttons next to them. On specific supported sites (IMDB, MDBList, TraktTV, etc.), it also reads the page to extract IMDB IDs and add DMM search buttons.
+
+Remote code justification:
+This extension does not use any remote code. All code is bundled in the extension package. No scripts are fetched or executed from external servers.
+
+Data usage certification:
+The extension does not collect, transmit, or store any user data. It only reads page content locally to extract IMDB IDs and detect magnet links, then creates buttons that link to debridmediamanager.com.
