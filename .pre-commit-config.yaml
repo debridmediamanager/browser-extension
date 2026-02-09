@@ -5,5 +5,5 @@ repos:
         name: Check userscript version bump
         entry: scripts/check-version-bump.sh
         language: script
-        files: content_script\.js
+        files: ^content_script\.js$
         stages: [pre-commit]
