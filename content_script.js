@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.7.0
-// @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, and Bittorrent sites with magnet links
+// @version      1.8.0
+// @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
 // @match        *://*/*
@@ -251,6 +251,57 @@
 		});
 	}
 
+	// JustWatch functions
+	function addButtonsToJustWatchSingleTitle() {
+		const targetElement = document.querySelector("h1");
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added")) return;
+		// Extract from Apollo cache in inline scripts
+		let imdbId = null;
+		document.querySelectorAll("script:not([src])").forEach((s) => {
+			const match = s.textContent.match(/"imdbId":"(tt\d+)"/);
+			if (match) imdbId = match[1];
+		});
+		if (!imdbId) return;
+		targetElement.setAttribute("data-dmm-btn-added", "true");
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+	}
+
+	// TheTVDB functions
+	function addButtonsToTheTVDBSingleTitle() {
+		const targetElement = document.querySelector("h1#series_title");
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added")) return;
+		const imdbId = document.querySelector('a[href*="imdb.com/title/"]')?.href?.match(/tt\d+/)?.[0];
+		if (!imdbId) return;
+		targetElement.setAttribute("data-dmm-btn-added", "true");
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+	}
+
+	// Criticker functions
+	function addButtonsToCritickerSingleTitle() {
+		const targetElement = document.querySelector("h1");
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added")) return;
+		const imdbId = document.querySelector('a[href*="imdb.com/title/"]')?.href?.match(/tt\d+/)?.[0];
+		if (!imdbId) return;
+		targetElement.setAttribute("data-dmm-btn-added", "true");
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+	}
+
+	// Metacritic functions
+	function addButtonsToMetacriticSingleTitle() {
+		const targetElement = document.querySelector("h1");
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added")) return;
+		let imdbId = null;
+		document.querySelectorAll("script:not([src])").forEach((s) => {
+			if (!imdbId) {
+				const match = s.textContent.match(/tt\d{5,}/);
+				if (match) imdbId = match[0];
+			}
+		});
+		if (!imdbId) return;
+		targetElement.setAttribute("data-dmm-btn-added", "true");
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+	}
+
 	// letterboxd functions
 	function addButtonsToLetterboxdSingleTitle() {
 		const imdbId = document
@@ -378,6 +429,31 @@
 		const isLetterboxdSingleTitlePage = /^\/film\//.test(location.pathname);
 		if (isLetterboxdSingleTitlePage) {
 			addButtonsToLetterboxdSingleTitle();
+		}
+
+		///// JUSTWATCH /////
+	} else if (hostname === "www.justwatch.com") {
+		if (/\/(movie|tv-show)\//.test(location.pathname)) {
+			addButtonsToJustWatchSingleTitle();
+			changeObserver("#app", addButtonsToJustWatchSingleTitle);
+		}
+
+		///// THETVDB /////
+	} else if (hostname === "thetvdb.com") {
+		if (/^\/(movies|series)\//.test(location.pathname)) {
+			addButtonsToTheTVDBSingleTitle();
+		}
+
+		///// CRITICKER /////
+	} else if (hostname === "www.criticker.com") {
+		if (/^\/film\//.test(location.pathname)) {
+			addButtonsToCritickerSingleTitle();
+		}
+
+		///// METACRITIC /////
+	} else if (hostname === "www.metacritic.com") {
+		if (/^\/(movie|tv)\//.test(location.pathname)) {
+			addButtonsToMetacriticSingleTitle();
 		}
 
 	}

@@ -320,3 +320,113 @@ test.describe("Letterboxd", () => {
 		);
 	});
 });
+
+// ---------------------------------------------------------------------------
+// JustWatch
+// ---------------------------------------------------------------------------
+test.describe("JustWatch", () => {
+	test("movie page", async ({ page }) => {
+		await page.goto("https://www.justwatch.com/us/movie/dune-part-two", {
+			waitUntil: "load",
+		});
+		await page.waitForSelector("h1", { timeout: 30_000 });
+
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
+
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt15239678");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// TheTVDB
+// ---------------------------------------------------------------------------
+test.describe("TheTVDB", () => {
+	test("movie page", async ({ page }) => {
+		await page.goto("https://thetvdb.com/movies/dune-part-two", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector("h1#series_title", { timeout: 30_000 });
+
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
+
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt15239678");
+	});
+
+	test("series page", async ({ page }) => {
+		await page.goto("https://thetvdb.com/series/game-of-thrones", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector("h1#series_title", { timeout: 30_000 });
+
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
+
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt0944947");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Criticker
+// ---------------------------------------------------------------------------
+test.describe("Criticker", () => {
+	test("single film page", async ({ page }) => {
+		await page.goto("https://www.criticker.com/film/Dune-Part-Two/", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector("h1", { timeout: 30_000 });
+
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
+
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt15239678");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Metacritic
+// ---------------------------------------------------------------------------
+test.describe("Metacritic", () => {
+	test("movie page", async ({ page }) => {
+		await page.goto("https://www.metacritic.com/movie/dune-part-two/", {
+			waitUntil: "load",
+		});
+		await page.waitForSelector("h1", { timeout: 30_000 });
+
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
+
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt15239678");
+	});
+});

@@ -3,6 +3,7 @@ firefox_credentials.sh
 */icons
 */*.js
 !tests/*.js
+!scripts/*.js
 node_modules
 */manifest.json
 test-results/
