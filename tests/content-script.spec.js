@@ -254,63 +254,9 @@ test.describe("AniDB", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Trakt.tv — blocked by Cloudflare Turnstile (cf_clearance is fingerprint-bound)
+// Trakt.tv — requires CDP connection to real Chrome (Cloudflare Turnstile
+// blocks Playwright's Chromium). See tests/trakt-cdp.spec.js
 // ---------------------------------------------------------------------------
-test.describe("Trakt.tv", () => {
-	test.skip(
-		true,
-		"Trakt.tv uses Cloudflare Turnstile — cf_clearance is fingerprint-bound and cannot be transferred to headless browsers"
-	);
-
-	test("show page", async ({ page }) => {
-		await page.goto("https://trakt.tv/shows/fallout", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector("#summary-wrapper div > h1", {
-			timeout: 30_000,
-		});
-		const btns = await injectAndWaitForButtons(page);
-		await expect(btns).toHaveCount(1);
-
-		const urls = await extractDmmUrls(page);
-		expect(urls).toHaveLength(1);
-		expect(urls[0]).toMatch(
-			/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
-		);
-	});
-
-	test("movie page", async ({ page }) => {
-		await page.goto(
-			"https://trakt.tv/movies/ghostbusters-frozen-empire-2024",
-			{ waitUntil: "domcontentloaded" }
-		);
-		await page.waitForSelector("#summary-wrapper div > h1", {
-			timeout: 30_000,
-		});
-		const btns = await injectAndWaitForButtons(page);
-		await expect(btns).toHaveCount(1);
-
-		const urls = await extractDmmUrls(page);
-		expect(urls).toHaveLength(1);
-		expect(urls[0]).toMatch(
-			/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
-		);
-	});
-
-	test("episode page — should NOT inject buttons", async ({ page }) => {
-		await page.goto(
-			"https://trakt.tv/shows/shogun-2024/seasons/1/episodes/1",
-			{ waitUntil: "domcontentloaded" }
-		);
-		await page.waitForSelector("#summary-wrapper div > h1", {
-			timeout: 30_000,
-		});
-		await injectScript(page);
-		await page.waitForTimeout(3_000);
-		const btns = page.locator("[data-dmm-btn-added]");
-		await expect(btns).toHaveCount(0);
-	});
-});
 
 // ---------------------------------------------------------------------------
 // iCheckMovies (www)
@@ -353,48 +299,6 @@ test.describe("iCheckMovies www", () => {
 	});
 });
 
-// ---------------------------------------------------------------------------
-// iCheckMovies (beta) — requires login, redirects to login page
-// ---------------------------------------------------------------------------
-test.describe("iCheckMovies beta", () => {
-	test.skip(true, "beta.icheckmovies.com requires login");
-
-	test("single title page", async ({ page }) => {
-		await page.goto(
-			"https://beta.icheckmovies.com/movies/1-the+shawshank+redemption",
-			{ waitUntil: "domcontentloaded" }
-		);
-		await page.waitForSelector("h1.title", { timeout: 30_000 });
-		const btns = await injectAndWaitForButtons(page);
-		await expect(btns).toHaveCount(1);
-
-		const urls = await extractDmmUrls(page);
-		expect(urls).toHaveLength(1);
-		expect(urls[0]).toMatch(
-			/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
-		);
-	});
-
-	test("list page", async ({ page }) => {
-		await page.goto(
-			"https://beta.icheckmovies.com/lists/1-imdbs+top+250",
-			{ waitUntil: "domcontentloaded" }
-		);
-		await page.waitForSelector("div.media-content", {
-			timeout: 30_000,
-		});
-		const btns = await injectAndWaitForButtons(page);
-		expect(await btns.count()).toBeGreaterThan(0);
-
-		const urls = await extractDmmUrls(page);
-		expect(urls.length).toBeGreaterThan(0);
-		for (const url of urls) {
-			expect(url).toMatch(
-				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
-			);
-		}
-	});
-});
 
 // ---------------------------------------------------------------------------
 // Letterboxd — broken: content script looks for h1.filmtitle which no
