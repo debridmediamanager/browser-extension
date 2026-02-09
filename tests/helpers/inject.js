@@ -81,9 +81,84 @@ async function extractDmmUrls(page) {
 	});
 }
 
+/**
+ * Assert that every injected DMM button/link is visible to the user
+ * (non-zero dimensions, not clipped by overflow, not hidden by CSS).
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<{total: number, visible: number, hidden: string[]}>}
+ */
+async function checkDmmButtonVisibility(page) {
+	return page.evaluate(() => {
+		const results = { total: 0, visible: 0, hidden: [] };
+		// Find only the actual DMM button/link elements (not their parents)
+		const buttons = document.querySelectorAll(
+			"[data-dmm-btn-added] button, [data-dmm-btn-added] + button"
+		);
+		const links = document.querySelectorAll(
+			"[data-dmm-btn-added] a[href]"
+		);
+		const DMM_RE = /debridmediamanager\.com/;
+		const all = new Set([
+			...Array.from(buttons).filter((b) => b.textContent.includes("DMM")),
+			...Array.from(links).filter((a) => DMM_RE.test(a.href)),
+		]);
+
+		for (const el of all) {
+			// Skip elements hidden by the site (ancestor display:none) —
+			// e.g. paginated list items. These aren't our visibility bugs.
+			let hiddenBySite = false;
+			let ancestor = el.parentElement;
+			while (ancestor) {
+				if (window.getComputedStyle(ancestor).display === "none") {
+					hiddenBySite = true;
+					break;
+				}
+				ancestor = ancestor.parentElement;
+			}
+			if (hiddenBySite) continue;
+
+			results.total++;
+			const rect = el.getBoundingClientRect();
+			const style = window.getComputedStyle(el);
+			const isVisible =
+				rect.width > 0 &&
+				rect.height > 0 &&
+				style.visibility !== "hidden" &&
+				style.display !== "none" &&
+				style.opacity !== "0";
+
+			// Check if clipped by ancestor overflow
+			let clipped = false;
+			let parent = el.parentElement;
+			while (parent) {
+				const ps = window.getComputedStyle(parent);
+				if (ps.overflow === "hidden" || ps.overflowX === "hidden") {
+					const pr = parent.getBoundingClientRect();
+					if (rect.right > pr.right + 1 || rect.left < pr.left - 1) {
+						clipped = true;
+						break;
+					}
+				}
+				parent = parent.parentElement;
+			}
+
+			if (isVisible && !clipped) {
+				results.visible++;
+			} else {
+				const label = el.textContent.trim().substring(0, 30);
+				results.hidden.push(
+					`"${label}" (${clipped ? "clipped by overflow" : `css: display=${style.display}, visibility=${style.visibility}, ${rect.width}x${rect.height}`})`
+				);
+			}
+		}
+		return results;
+	});
+}
+
 module.exports = {
 	injectAndWaitForButtons,
 	injectScript,
 	extractDmmUrls,
+	checkDmmButtonVisibility,
 	CONTENT_SCRIPT_PATH,
 };

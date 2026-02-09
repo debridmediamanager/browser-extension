@@ -119,20 +119,19 @@
 
 	function addButtonsToIMDBList() {
 		const items = Array.from(
-			document.querySelectorAll(
-				".lister-item .lister-item-header, .lister-item .media"
-			)
+			document.querySelectorAll(".ipc-metadata-list-summary-item")
 		).filter((item) => !item.hasAttribute("data-dmm-btn-added"));
 
 		items.forEach((item) => {
+			const link = item.querySelector('a[href*="/title/"]');
+			const imdbId = link?.href?.match(/tt\d+/)?.[0];
+			if (!imdbId) return;
+
 			item.setAttribute("data-dmm-btn-added", "true");
 
-			let link = item.querySelector('a[href^="/title/"]').href;
-			let imdbId = link.match(/tt\d+/)?.[0];
-			if (!imdbId) return;
+			const targetElement = item.querySelector("h3.ipc-title__text") || link;
 			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
-
-			addButtonToElement(item, SEARCH_BTN_LABEL, searchUrl);
+			addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 		});
 
 		changeObserver("ul.ipc-metadata-list", addButtonsToIMDBList);
@@ -140,9 +139,7 @@
 
 	function addButtonsToIMDBChart() {
 		const items = Array.from(document.querySelectorAll(".cli-title")).filter(
-			(item) =>
-				item.innerText.match(/\d+\./) &&
-				!item.hasAttribute("data-dmm-btn-added")
+			(item) => !item.hasAttribute("data-dmm-btn-added")
 		);
 
 		items.forEach((item) => {
@@ -161,15 +158,16 @@
 
 	// MDBList functions
 	function addButtonsToMDBListSingleTitle() {
-		const targetElement = document.querySelector(
-			"#content-desktop-2 > div > div:nth-child(1) > h3"
-		);
-
-		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
+		const targetElement = document.querySelector("h1.movie-hero__title");
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added"))
 			return;
-		targetElement.setAttribute("data-dmm-btn-added", "true");
 
-		const searchUrl = `${DMM_HOST}${window.location.pathname}`;
+		const imdbId = document.querySelector('a[href*="imdb.com/title/"]')
+			?.href?.match(/tt\d+/)?.[0];
+		if (!imdbId) return;
+
+		targetElement.setAttribute("data-dmm-btn-added", "true");
+		const searchUrl = `${X_DMM_HOST}/${imdbId}`;
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
@@ -179,16 +177,19 @@
 		).filter((item) => !item.hasAttribute("data-dmm-btn-added"));
 
 		items.forEach((item) => {
-			item.setAttribute("data-dmm-btn-added", "true");
-
 			const targetElement = item.querySelector("div.header");
-			if (targetElement) {
-				const url = targetElement.parentElement
-					.querySelector("a")
-					.href.replace("https://mdblist.com/", "");
-				const searchUrl = `${DMM_HOST}/${url}`;
-				addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
-			}
+			if (!targetElement) return;
+
+			const imdbId = item.querySelector('a[href*="imdb.com/title/"]')
+				?.href?.match(/tt\d+/)?.[0];
+			if (!imdbId) return;
+
+			item.setAttribute("data-dmm-btn-added", "true");
+			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
+			const button = createButton(SEARCH_BTN_LABEL, searchUrl);
+			button.style.marginLeft = "0";
+			button.style.marginTop = "4px";
+			targetElement.insertAdjacentElement("afterend", button);
 		});
 
 		changeObserver("div.ui.centered.cards", addButtonsToMDBListSearchResults);
@@ -229,22 +230,6 @@
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
-	function addButtonsToiCheckMoviesBetaSingleTitle() {
-		const imdbId = document
-			.querySelector("a.stat-imdb")
-			?.href?.match(/tt\d+/)?.[0];
-		if (!imdbId) return;
-
-		const targetElement = document.querySelector("h1.title");
-
-		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
-			return;
-		targetElement.setAttribute("data-dmm-btn-added", "true");
-
-		const searchUrl = `${X_DMM_HOST}/${imdbId}`;
-		addLinkToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
-	}
-
 	function addButtonsToiCheckMoviesList() {
 		const items = Array.from(
 			document.querySelectorAll("ol#itemListMovies > li")
@@ -266,32 +251,6 @@
 		});
 	}
 
-	function addButtonsToiCheckMoviesBetaList() {
-		const items = Array.from(
-			document.querySelectorAll("div.media-content")
-		).filter((item) => !item.hasAttribute("data-dmm-btn-added"));
-
-		items.forEach((item) => {
-			const imdbId = item
-				.querySelector("a.stat-imdb")
-				?.href?.match(/tt\d+/)?.[0];
-			if (!imdbId) return;
-
-			const targetElement = item.querySelector("h3.title");
-			if (!targetElement) return;
-
-			item.setAttribute("data-dmm-btn-added", "true");
-
-			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
-			addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
-		});
-
-		changeObserver(
-			"#app section.section div.columns",
-			addButtonsToiCheckMoviesBetaList
-		);
-	}
-
 	// letterboxd functions
 	function addButtonsToLetterboxdSingleTitle() {
 		const imdbId = document
@@ -299,7 +258,7 @@
 			?.href?.match(/tt\d+/)?.[0];
 		if (!imdbId) return;
 
-		const targetElement = document.querySelector("h1.filmtitle");
+		const targetElement = document.querySelector("h1.headline-1");
 
 		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
 			return;
@@ -414,21 +373,6 @@
 		if (isiCheckMoviesSingleTitlePage) {
 			addButtonsToiCheckMoviesSingleTitle();
 		}
-	} else if (hostname === "beta.icheckmovies.com") {
-		const isiCheckMoviesListPage = /^\/lists\//.test(location.pathname);
-		if (isiCheckMoviesListPage) {
-			addButtonsToiCheckMoviesBetaList();
-		}
-		const isiCheckMoviesSingleTitlePage = /^\/movies\//.test(location.pathname);
-		if (isiCheckMoviesSingleTitlePage) {
-			addButtonsToiCheckMoviesBetaSingleTitle();
-		}
-
-		///// MYANIMELIST /////
-	} else if (hostname === "myanimelist.net") {
-		///// KITSU /////
-	} else if (hostname === "kitsu.io") {
-
 		///// LETTERBOXD /////
 	} else if (hostname === "letterboxd.com") {
 		const isLetterboxdSingleTitlePage = /^\/film\//.test(location.pathname);
@@ -436,11 +380,5 @@
 			addButtonsToLetterboxdSingleTitle();
 		}
 
-		///// JUSTWATCH /////
-	} else if (hostname === "www.justwatch.com") {
-		///// TVDB /////
-	} else if (hostname === "www.thetvdb.com") {
-		///// TMDB /////
-	} else if (hostname === "www.themoviedb.org") {
 	}
 })();

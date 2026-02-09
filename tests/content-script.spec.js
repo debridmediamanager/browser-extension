@@ -2,8 +2,8 @@
 const { test, expect } = require("@playwright/test");
 const {
 	injectAndWaitForButtons,
-	injectScript,
 	extractDmmUrls,
+	checkDmmButtonVisibility,
 } = require("./helpers/inject");
 
 const IMDB_COOKIES = [
@@ -69,60 +69,81 @@ test.describe("IMDB www", () => {
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
 
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
 		const urls = await extractDmmUrls(page);
 		expect(urls).toHaveLength(1);
 		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt9784708");
 	});
 
-	test("list page — broken: .lister-item selectors no longer exist", async ({
-		page,
-	}) => {
+	test("list page", async ({ page }) => {
 		await page.goto("https://www.imdb.com/list/ls540852272/", {
 			waitUntil: "domcontentloaded",
 		});
-		// IMDB now uses .ipc-metadata-list-summary-item instead of .lister-item
 		await page.waitForSelector(".ipc-metadata-list-summary-item", {
 			timeout: 30_000,
 		});
 
-		const ok = await injectScript(page);
-		await page.waitForTimeout(2_000);
+		const btns = await injectAndWaitForButtons(page);
+		expect(await btns.count()).toBeGreaterThan(0);
 
-		const btns = page.locator("[data-dmm-btn-added]");
-		expect(ok).toBe(true);
-		await expect(btns).toHaveCount(0);
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThan(0);
+		for (const url of urls) {
+			expect(url).toMatch(
+				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+			);
+		}
 	});
 
-	test("chart/top page — broken: .cli-title no longer has number prefix", async ({
-		page,
-	}) => {
+	test("chart/top page", async ({ page }) => {
 		await page.goto("https://www.imdb.com/chart/top/", {
 			waitUntil: "domcontentloaded",
 		});
 		await page.waitForSelector(".cli-title", { timeout: 30_000 });
 
-		const ok = await injectScript(page);
-		await page.waitForTimeout(2_000);
+		const btns = await injectAndWaitForButtons(page);
+		expect(await btns.count()).toBeGreaterThan(0);
 
-		const btns = page.locator("[data-dmm-btn-added]");
-		expect(ok).toBe(true);
-		await expect(btns).toHaveCount(0);
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThan(0);
+		for (const url of urls) {
+			expect(url).toMatch(
+				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+			);
+		}
 	});
 
-	test("chart/toptv page — broken: .cli-title no longer has number prefix", async ({
-		page,
-	}) => {
+	test("chart/toptv page", async ({ page }) => {
 		await page.goto("https://www.imdb.com/chart/toptv/", {
 			waitUntil: "domcontentloaded",
 		});
 		await page.waitForSelector(".cli-title", { timeout: 30_000 });
 
-		const ok = await injectScript(page);
-		await page.waitForTimeout(2_000);
+		const btns = await injectAndWaitForButtons(page);
+		expect(await btns.count()).toBeGreaterThan(0);
 
-		const btns = page.locator("[data-dmm-btn-added]");
-		expect(ok).toBe(true);
-		await expect(btns).toHaveCount(0);
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThan(0);
+		for (const url of urls) {
+			expect(url).toMatch(
+				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+			);
+		}
 	});
 });
 
@@ -144,6 +165,10 @@ test.describe("IMDB mobile", () => {
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
 
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
 		const urls = await extractDmmUrls(page);
 		expect(urls).toHaveLength(1);
 		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt9784708");
@@ -154,36 +179,40 @@ test.describe("IMDB mobile", () => {
 // MDBList
 // ---------------------------------------------------------------------------
 test.describe("MDBList", () => {
-	test("movie page — broken: selector #content-desktop-2 h3 no longer exists", async ({
-		page,
-	}) => {
+	test("movie page", async ({ page }) => {
 		await page.goto("https://mdblist.com/movie/tt9466114", {
 			waitUntil: "load",
 		});
 		await page.waitForSelector("h1.movie-hero__title", { timeout: 30_000 });
 
-		const ok = await injectScript(page);
-		await page.waitForTimeout(2_000);
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
 
-		const btns = page.locator("[data-dmm-btn-added]");
-		expect(ok).toBe(false);
-		await expect(btns).toHaveCount(0);
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt9466114");
 	});
 
-	test("show page — broken: selector #content-desktop-2 h3 no longer exists", async ({
-		page,
-	}) => {
+	test("show page", async ({ page }) => {
 		await page.goto("https://mdblist.com/show/tt13649112", {
 			waitUntil: "load",
 		});
 		await page.waitForSelector("h1.movie-hero__title", { timeout: 30_000 });
 
-		const ok = await injectScript(page);
-		await page.waitForTimeout(2_000);
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
 
-		const btns = page.locator("[data-dmm-btn-added]");
-		expect(ok).toBe(false);
-		await expect(btns).toHaveCount(0);
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt13649112");
 	});
 
 	test("search results / list page", async ({ page }) => {
@@ -198,11 +227,15 @@ test.describe("MDBList", () => {
 		const btns = await injectAndWaitForButtons(page);
 		expect(await btns.count()).toBeGreaterThan(0);
 
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
 		const urls = await extractDmmUrls(page);
 		expect(urls.length).toBeGreaterThan(0);
 		for (const url of urls) {
 			expect(url).toMatch(
-				/^https:\/\/debridmediamanager\.com\/(movie|show)\//
+				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
 			);
 		}
 	});
@@ -226,6 +259,10 @@ test.describe("iCheckMovies www", () => {
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
 
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
 		const urls = await extractDmmUrls(page);
 		expect(urls).toHaveLength(1);
 		// Fight Club = tt0137523
@@ -244,6 +281,10 @@ test.describe("iCheckMovies www", () => {
 		const btns = await injectAndWaitForButtons(page);
 		expect(await btns.count()).toBeGreaterThan(0);
 
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
 		const urls = await extractDmmUrls(page);
 		expect(urls.length).toBeGreaterThan(0);
 		for (const url of urls) {
@@ -256,23 +297,26 @@ test.describe("iCheckMovies www", () => {
 
 
 // ---------------------------------------------------------------------------
-// Letterboxd — broken: content script looks for h1.filmtitle which no
-// longer exists (site now uses h1.headline-1.primaryname)
+// Letterboxd
 // ---------------------------------------------------------------------------
 test.describe("Letterboxd", () => {
-	test("single film page — broken: h1.filmtitle selector no longer exists", async ({
-		page,
-	}) => {
+	test("single film page", async ({ page }) => {
 		await page.goto("https://letterboxd.com/film/the-idea-of-you-2024/", {
 			waitUntil: "load",
 		});
 		await page.waitForSelector("h1.headline-1", { timeout: 30_000 });
 
-		const ok = await injectScript(page);
-		await page.waitForTimeout(2_000);
+		const btns = await injectAndWaitForButtons(page);
+		await expect(btns).toHaveCount(1);
 
-		const btns = page.locator("[data-dmm-btn-added]");
-		expect(ok).toBe(false);
-		await expect(btns).toHaveCount(0);
+		const vis = await checkDmmButtonVisibility(page);
+		expect(vis.hidden).toEqual([]);
+		expect(vis.visible).toBe(vis.total);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toMatch(
+			/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+		);
 	});
 });
