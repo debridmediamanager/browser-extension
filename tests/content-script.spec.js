@@ -209,51 +209,6 @@ test.describe("MDBList", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AniDB
-// ---------------------------------------------------------------------------
-test.describe("AniDB", () => {
-	test("single title page", async ({ page }) => {
-		await page.goto("https://anidb.net/anime/17617", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector("#layout-main > h1.anime", {
-			timeout: 30_000,
-		});
-
-		const btns = await injectAndWaitForButtons(page);
-		expect(await btns.count()).toBeGreaterThanOrEqual(1);
-
-		const urls = await extractDmmUrls(page);
-		expect(urls.length).toBeGreaterThanOrEqual(1);
-		// The single title button should route to anidb-17617
-		expect(urls).toContain(
-			"https://debridmediamanager.com/anime/anidb-17617"
-		);
-		// NOTE: addButtonsToAniDBAnyPage has a known bug where it processes
-		// non-AniDB links (e.g. MyAnimeList), producing malformed URLs.
-		// We only verify the primary single-title URL above.
-	});
-
-	test("season page", async ({ page }) => {
-		await page.goto("https://anidb.net/anime/season/?do.filter=1", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('a[href*="/anime/"]', { timeout: 30_000 });
-
-		const btns = await injectAndWaitForButtons(page);
-		expect(await btns.count()).toBeGreaterThan(0);
-
-		const urls = await extractDmmUrls(page);
-		expect(urls.length).toBeGreaterThan(0);
-		for (const url of urls) {
-			expect(url).toMatch(
-				/^https:\/\/debridmediamanager\.com\/anime\/anidb-\d+$/
-			);
-		}
-	});
-});
-
-// ---------------------------------------------------------------------------
 // Trakt.tv — requires CDP connection to real Chrome (Cloudflare Turnstile
 // blocks Playwright's Chromium). See tests/trakt-cdp.spec.js
 // ---------------------------------------------------------------------------

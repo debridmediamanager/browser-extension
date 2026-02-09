@@ -2,7 +2,7 @@
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
 // @version      1.6.2
-// @description  Add accessible DMM buttons to IMDB, MDBList, AniDB, TraktTV, and Bittorrent sites with magnet links
+// @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
 // @match        *://*/*
@@ -192,37 +192,6 @@
 		});
 
 		changeObserver("div.ui.centered.cards", addButtonsToMDBListSearchResults);
-	}
-
-	// AniDB functions
-	function addButtonsToAniDBSingleTitle() {
-		const targetElement = document.querySelector("#layout-main > h1.anime");
-
-		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
-			return;
-		targetElement.setAttribute("data-dmm-btn-added", "true");
-
-		const searchUrl = `${DMM_HOST}/${window.location.pathname
-			.replaceAll("/", "")
-			.replace("anime", "anime/anidb-")}`;
-		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
-	}
-
-	function addButtonsToAniDBAnyPage() {
-		const items = Array.from(document.querySelectorAll("a")).filter(
-			(item) => item.innerText.trim() && /\/anime\/\d+$/.test(item.href) && !item.hasAttribute("data-dmm-btn-added")
-		);
-
-		items.forEach((item) => {
-			item.setAttribute("data-dmm-btn-added", "true");
-
-			const searchUrl = `${DMM_HOST}/${item.href
-				.replace("https://anidb.net/", "")
-				.replaceAll("/", "")
-				.replace("anime", "anime/anidb-")}`;
-
-			addButtonToElement(item, SEARCH_BTN_LABEL, searchUrl);
-		});
 	}
 
 	// TraktTV functions
@@ -423,15 +392,6 @@
 		} else {
 			addButtonsToMDBListSearchResults();
 		}
-
-		///// ANIDB /////
-	} else if (hostname === "anidb.net") {
-		const isAniDBSingleTitlePage = /^\/anime\/\d+/.test(location.pathname);
-
-		if (isAniDBSingleTitlePage) {
-			addButtonsToAniDBSingleTitle();
-		}
-		addButtonsToAniDBAnyPage();
 
 		///// TRAKT TV /////
 	} else if (hostname === "trakt.tv") {
