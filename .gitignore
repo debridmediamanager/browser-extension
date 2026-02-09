@@ -2,8 +2,10 @@
 firefox_credentials.sh
 */icons
 */*.js
+!tests/*.js
 node_modules
 */manifest.json
+test-results/
 
 .DS_Store
 */.DS_Store

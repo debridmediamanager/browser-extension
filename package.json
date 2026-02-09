@@ -4,5 +4,8 @@
     "prettier": "^3.3.3",
     "terser": "^5.36.0",
     "web-ext": "^8.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }
