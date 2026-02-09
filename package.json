@@ -1,5 +1,8 @@
 {
-  "version": "1.6.2",
+  "version": "1.7.0",
+  "scripts": {
+    "prepare": "pre-commit install || echo 'pre-commit not found — install it with: uv tool install pre-commit'"
+  },
   "dependencies": {
     "prettier": "^3.3.3",
     "terser": "^5.36.0",
