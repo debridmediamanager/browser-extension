@@ -46,4 +46,44 @@ async function injectScript(page) {
 	}
 }
 
-module.exports = { injectAndWaitForButtons, injectScript, CONTENT_SCRIPT_PATH };
+/**
+ * Extract DMM destination URLs from injected buttons/links.
+ * Buttons use window.open() in onclick closures, so we intercept it.
+ * Links use href directly.
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<string[]>} array of DMM URLs
+ */
+async function extractDmmUrls(page) {
+	return page.evaluate(() => {
+		const DMM_URL_RE =
+			/^https:\/\/(x\.)?debridmediamanager\.com\//;
+		const urls = [];
+		const origOpen = window.open;
+		window.open = (url) => {
+			if (typeof url === "string" && DMM_URL_RE.test(url))
+				urls.push(url);
+		};
+
+		// Click all DMM buttons to capture their window.open URLs
+		document
+			.querySelectorAll("[data-dmm-btn-added] button")
+			.forEach((btn) => btn.click());
+
+		// Collect hrefs from <a> elements that point to DMM
+		document
+			.querySelectorAll("[data-dmm-btn-added] a[href]")
+			.forEach((link) => {
+				if (DMM_URL_RE.test(link.href)) urls.push(link.href);
+			});
+
+		window.open = origOpen;
+		return urls;
+	});
+}
+
+module.exports = {
+	injectAndWaitForButtons,
+	injectScript,
+	extractDmmUrls,
+	CONTENT_SCRIPT_PATH,
+};

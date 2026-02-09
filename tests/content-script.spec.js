@@ -1,6 +1,10 @@
 // @ts-check
 const { test, expect } = require("@playwright/test");
-const { injectAndWaitForButtons, injectScript } = require("./helpers/inject");
+const {
+	injectAndWaitForButtons,
+	injectScript,
+	extractDmmUrls,
+} = require("./helpers/inject");
 
 const IMDB_COOKIES = [
 	{
@@ -64,6 +68,10 @@ test.describe("IMDB www", () => {
 		});
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt9784708");
 	});
 
 	test("list page — broken: .lister-item selectors no longer exist", async ({
@@ -81,7 +89,6 @@ test.describe("IMDB www", () => {
 		await page.waitForTimeout(2_000);
 
 		const btns = page.locator("[data-dmm-btn-added]");
-		// Script runs but finds no matching elements
 		expect(ok).toBe(true);
 		await expect(btns).toHaveCount(0);
 	});
@@ -94,8 +101,6 @@ test.describe("IMDB www", () => {
 		});
 		await page.waitForSelector(".cli-title", { timeout: 30_000 });
 
-		// Script filters for innerText matching /\d+\./ but IMDB removed
-		// the rank number from .cli-title elements
 		const ok = await injectScript(page);
 		await page.waitForTimeout(2_000);
 
@@ -138,6 +143,10 @@ test.describe("IMDB mobile", () => {
 		});
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt9784708");
 	});
 });
 
@@ -151,15 +160,12 @@ test.describe("MDBList", () => {
 		await page.goto("https://mdblist.com/movie/tt9466114", {
 			waitUntil: "load",
 		});
-		// The site now uses h1.movie-hero__title, but the content script
-		// targets #content-desktop-2 > div > div:nth-child(1) > h3
 		await page.waitForSelector("h1.movie-hero__title", { timeout: 30_000 });
 
 		const ok = await injectScript(page);
 		await page.waitForTimeout(2_000);
 
 		const btns = page.locator("[data-dmm-btn-added]");
-		// Script errors because selector doesn't match — no buttons added
 		expect(ok).toBe(false);
 		await expect(btns).toHaveCount(0);
 	});
@@ -191,6 +197,14 @@ test.describe("MDBList", () => {
 
 		const btns = await injectAndWaitForButtons(page);
 		expect(await btns.count()).toBeGreaterThan(0);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThan(0);
+		for (const url of urls) {
+			expect(url).toMatch(
+				/^https:\/\/debridmediamanager\.com\/(movie|show)\//
+			);
+		}
 	});
 });
 
@@ -208,6 +222,16 @@ test.describe("AniDB", () => {
 
 		const btns = await injectAndWaitForButtons(page);
 		expect(await btns.count()).toBeGreaterThanOrEqual(1);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThanOrEqual(1);
+		// The single title button should route to anidb-17617
+		expect(urls).toContain(
+			"https://debridmediamanager.com/anime/anidb-17617"
+		);
+		// NOTE: addButtonsToAniDBAnyPage has a known bug where it processes
+		// non-AniDB links (e.g. MyAnimeList), producing malformed URLs.
+		// We only verify the primary single-title URL above.
 	});
 
 	test("season page", async ({ page }) => {
@@ -218,6 +242,14 @@ test.describe("AniDB", () => {
 
 		const btns = await injectAndWaitForButtons(page);
 		expect(await btns.count()).toBeGreaterThan(0);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThan(0);
+		for (const url of urls) {
+			expect(url).toMatch(
+				/^https:\/\/debridmediamanager\.com\/anime\/anidb-\d+$/
+			);
+		}
 	});
 });
 
@@ -225,7 +257,10 @@ test.describe("AniDB", () => {
 // Trakt.tv — blocked by Cloudflare Turnstile (cf_clearance is fingerprint-bound)
 // ---------------------------------------------------------------------------
 test.describe("Trakt.tv", () => {
-	test.skip(true, "Trakt.tv uses Cloudflare Turnstile — cf_clearance is fingerprint-bound and cannot be transferred to headless browsers");
+	test.skip(
+		true,
+		"Trakt.tv uses Cloudflare Turnstile — cf_clearance is fingerprint-bound and cannot be transferred to headless browsers"
+	);
 
 	test("show page", async ({ page }) => {
 		await page.goto("https://trakt.tv/shows/fallout", {
@@ -236,6 +271,12 @@ test.describe("Trakt.tv", () => {
 		});
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toMatch(
+			/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+		);
 	});
 
 	test("movie page", async ({ page }) => {
@@ -248,6 +289,12 @@ test.describe("Trakt.tv", () => {
 		});
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toMatch(
+			/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+		);
 	});
 
 	test("episode page — should NOT inject buttons", async ({ page }) => {
@@ -277,6 +324,11 @@ test.describe("iCheckMovies www", () => {
 
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		// Fight Club = tt0137523
+		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt0137523");
 	});
 
 	test("list page", async ({ page }) => {
@@ -290,6 +342,14 @@ test.describe("iCheckMovies www", () => {
 
 		const btns = await injectAndWaitForButtons(page);
 		expect(await btns.count()).toBeGreaterThan(0);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThan(0);
+		for (const url of urls) {
+			expect(url).toMatch(
+				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+			);
+		}
 	});
 });
 
@@ -307,6 +367,12 @@ test.describe("iCheckMovies beta", () => {
 		await page.waitForSelector("h1.title", { timeout: 30_000 });
 		const btns = await injectAndWaitForButtons(page);
 		await expect(btns).toHaveCount(1);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls).toHaveLength(1);
+		expect(urls[0]).toMatch(
+			/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+		);
 	});
 
 	test("list page", async ({ page }) => {
@@ -319,6 +385,14 @@ test.describe("iCheckMovies beta", () => {
 		});
 		const btns = await injectAndWaitForButtons(page);
 		expect(await btns.count()).toBeGreaterThan(0);
+
+		const urls = await extractDmmUrls(page);
+		expect(urls.length).toBeGreaterThan(0);
+		for (const url of urls) {
+			expect(url).toMatch(
+				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
+			);
+		}
 	});
 });
 
@@ -333,11 +407,8 @@ test.describe("Letterboxd", () => {
 		await page.goto("https://letterboxd.com/film/the-idea-of-you-2024/", {
 			waitUntil: "load",
 		});
-		// The site now uses h1.headline-1.primaryname instead of h1.filmtitle
 		await page.waitForSelector("h1.headline-1", { timeout: 30_000 });
 
-		// Script will crash because it finds the IMDb link but then
-		// querySelector("h1.filmtitle") returns null → setAttribute throws
 		const ok = await injectScript(page);
 		await page.waitForTimeout(2_000);
 
