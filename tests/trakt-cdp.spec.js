@@ -23,7 +23,7 @@ test.describe("Trakt.tv (CDP)", () => {
 		const context = browser.contexts()[0] || await browser.newContext();
 		const page = await context.newPage();
 		try {
-			await page.goto("https://trakt.tv/shows/fallout", {
+			await page.goto("https://app.trakt.tv/shows/fallout", {
 				waitUntil: "domcontentloaded",
 			});
 			await page.waitForSelector(
@@ -50,7 +50,7 @@ test.describe("Trakt.tv (CDP)", () => {
 		const page = await context.newPage();
 		try {
 			await page.goto(
-				"https://trakt.tv/movies/ghostbusters-frozen-empire-2024",
+				"https://app.trakt.tv/movies/ghostbusters-frozen-empire-2024",
 				{ waitUntil: "domcontentloaded" }
 			);
 			await page.waitForSelector(
@@ -77,7 +77,7 @@ test.describe("Trakt.tv (CDP)", () => {
 		const page = await context.newPage();
 		try {
 			await page.goto(
-				"https://trakt.tv/shows/shogun-2024/seasons/1/episodes/1",
+				"https://app.trakt.tv/shows/shogun-2024/seasons/1/episodes/1",
 				{ waitUntil: "domcontentloaded" }
 			);
 			await page.waitForSelector(

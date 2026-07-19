@@ -1,9 +1,21 @@
 {
     "manifest_version": 3,
     "name": "Debrid Media Manager",
-    "version": "1.8.2",
+    "version": "1.8.3",
     "description": "Add DMM buttons to IMDB, MDBList, TraktTV, Letterboxd, JustWatch, TheTVDB, Criticker, Metacritic, and torrent sites",
     "content_scripts": [
+        {
+            "matches": [
+                "*://trakt.tv/*",
+                "*://www.trakt.tv/*",
+                "*://app.trakt.tv/*"
+            ],
+            "js": [
+                "trakt_page_hook.js"
+            ],
+            "run_at": "document_start",
+            "world": "MAIN"
+        },
         {
             "matches": [
                 "<all_urls>"
