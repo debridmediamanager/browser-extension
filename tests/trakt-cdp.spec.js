@@ -26,9 +26,12 @@ test.describe("Trakt.tv (CDP)", () => {
 			await page.goto("https://trakt.tv/shows/fallout", {
 				waitUntil: "domcontentloaded",
 			});
-			await page.waitForSelector("#summary-wrapper div > h1", {
-				timeout: 30_000,
-			});
+			await page.waitForSelector(
+				"h1.trakt-responsive-title, #summary-wrapper div > h1, [data-testid='summary-media-title']",
+				{
+					timeout: 30_000,
+				}
+			);
 			const btns = await injectAndWaitForButtons(page);
 			await expect(btns).toHaveCount(1);
 
@@ -50,9 +53,12 @@ test.describe("Trakt.tv (CDP)", () => {
 				"https://trakt.tv/movies/ghostbusters-frozen-empire-2024",
 				{ waitUntil: "domcontentloaded" }
 			);
-			await page.waitForSelector("#summary-wrapper div > h1", {
-				timeout: 30_000,
-			});
+			await page.waitForSelector(
+				"h1.trakt-responsive-title, #summary-wrapper div > h1, [data-testid='summary-media-title']",
+				{
+					timeout: 30_000,
+				}
+			);
 			const btns = await injectAndWaitForButtons(page);
 			await expect(btns).toHaveCount(1);
 
@@ -74,9 +80,12 @@ test.describe("Trakt.tv (CDP)", () => {
 				"https://trakt.tv/shows/shogun-2024/seasons/1/episodes/1",
 				{ waitUntil: "domcontentloaded" }
 			);
-			await page.waitForSelector("#summary-wrapper div > h1", {
-				timeout: 30_000,
-			});
+			await page.waitForSelector(
+				"h1.trakt-responsive-title, #summary-wrapper div > h1, [data-testid='summary-media-title']",
+				{
+					timeout: 30_000,
+				}
+			);
 			await injectScript(page);
 			await page.waitForTimeout(3_000);
 			const btns = page.locator("[data-dmm-btn-added]");

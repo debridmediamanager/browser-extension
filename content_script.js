@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.1
+// @version      1.8.2
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -195,22 +195,163 @@
 		changeObserver("div.ui.centered.cards", addButtonsToMDBListSearchResults);
 	}
 
-	// TraktTV functions
-	function addButtonsToTraktTVSingleTitle() {
-		const targetElement = document.querySelector("#summary-wrapper div > h1");
+	// TraktTV functions — supports classic (#summary-wrapper) and Trakt Web v3
+	// (Svelte SPA: h1.trakt-responsive-title; IMDb often only in details drawer / API JSON).
+	const TRAKT_EXCLUDED =
+		/^\/(shows|movies)\/(trending|popular|anticipated|recommended|boxoffice|watched|collected|favorited|search)(\/|$)/;
 
-		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
-			return;
-		// find imdb id in page, <a data-type="imdb">
-		const imdbId = document
-			.querySelector("a#external-link-imdb")
-			?.href?.match(/tt\d+/)?.[0];
+	function getTraktSlugPath() {
+		// /movies/foo-2024 or /shows/bar[/seasons/1]
+		const m = location.pathname.match(
+			/^\/(movies|shows)\/([^/]+)(?:\/|$)/
+		);
+		if (!m || TRAKT_EXCLUDED.test(location.pathname)) return null;
+		return { type: m[1], slug: m[2] };
+	}
+
+	function findTraktImdbId() {
+		const selectors = [
+			"a#external-link-imdb",
+			'a[href*="imdb.com/title/"]',
+			'a[href*="www.imdb.com/title/"]',
+		];
+		for (const sel of selectors) {
+			const id = document.querySelector(sel)?.href?.match(/tt\d+/)?.[0];
+			if (id) return id;
+		}
+		// Page/API payloads sometimes leave ids in text/scripts
+		const html = document.documentElement?.innerHTML || "";
+		const fromJson =
+			html.match(/"imdb(?:Id)?"\s*:\s*"(tt\d+)"/) ||
+			html.match(/imdb\.com\/title\/(tt\d+)/);
+		if (fromJson) return fromJson[1];
+		return window.__DMM_TRAKT_IMDB || null;
+	}
+
+	function findTraktTitleElement() {
+		return (
+			document.querySelector("#summary-wrapper div > h1") ||
+			document.querySelector("h1.trakt-responsive-title") ||
+			document.querySelector('[data-testid="summary-media-title"]') ||
+			document.querySelector(".trakt-summary-title h1") ||
+			document.querySelector("h1")
+		);
+	}
+
+	function injectTraktFetchHook() {
+		if (document.documentElement.hasAttribute("data-dmm-trakt-hook")) return;
+		document.documentElement.setAttribute("data-dmm-trakt-hook", "1");
+		const script = document.createElement("script");
+		script.textContent = `(${function () {
+			if (window.__DMM_TRAKT_HOOK__) return;
+			window.__DMM_TRAKT_HOOK__ = true;
+			const post = (imdb) => {
+				if (!imdb || !/^tt\d+$/.test(imdb)) return;
+				window.postMessage({ source: "dmm-trakt", imdbId: imdb }, "*");
+			};
+			const scrape = (data) => {
+				if (!data || typeof data !== "object") return;
+				const id =
+					data.ids?.imdb ||
+					data.imdbId ||
+					data.movie?.ids?.imdb ||
+					data.show?.ids?.imdb ||
+					data.episode?.ids?.imdb;
+				if (id) post(id);
+			};
+			const wrap = (orig) =>
+				function (...args) {
+					const p = orig.apply(this, args);
+					try {
+						const req = args[0];
+						const url =
+							typeof req === "string"
+								? req
+								: req && req.url
+									? req.url
+									: "";
+						if (
+							url &&
+							/\/(movies|shows)\//.test(url) &&
+							!/\/(related|comments|lists|people|stats|ratings|videos|watching|watched|collection)/.test(
+								url
+							)
+						) {
+							p.then((res) => {
+								try {
+									res
+										.clone()
+										.json()
+										.then(scrape)
+										.catch(() => {});
+								} catch (_) {}
+							}).catch(() => {});
+						}
+					} catch (_) {}
+					return p;
+				};
+			if (window.fetch) window.fetch = wrap(window.fetch.bind(window));
+		}})()`;
+		(document.head || document.documentElement).appendChild(script);
+		script.remove();
+	}
+
+	function addButtonsToTraktTVSingleTitle() {
+		if (/\/episodes\/\d/.test(location.pathname)) return;
+		if (!getTraktSlugPath()) return;
+
+		injectTraktFetchHook();
+
+		const targetElement = findTraktTitleElement();
+		if (!targetElement) return;
+		if (targetElement.hasAttribute("data-dmm-btn-added")) return;
+
+		const imdbId = findTraktImdbId();
 		if (!imdbId) return;
 
 		targetElement.setAttribute("data-dmm-btn-added", "true");
-
 		const searchUrl = `${X_DMM_HOST}/${imdbId}`;
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
+	}
+
+	function setupTraktTV() {
+		injectTraktFetchHook();
+		window.addEventListener("message", (event) => {
+			if (event.source !== window) return;
+			const data = event.data;
+			if (!data || data.source !== "dmm-trakt" || !data.imdbId) return;
+			window.__DMM_TRAKT_IMDB = data.imdbId;
+			document
+				.querySelectorAll("[data-dmm-btn-added]")
+				.forEach((el) => el.removeAttribute("data-dmm-btn-added"));
+			addButtonsToTraktTVSingleTitle();
+		});
+
+		const run = () => addButtonsToTraktTVSingleTitle();
+		run();
+		changeObserver("body", run);
+
+		// SPA navigations (Trakt Web v3)
+		const rewipe = () => {
+			window.__DMM_TRAKT_IMDB = null;
+			document
+				.querySelectorAll("[data-dmm-btn-added]")
+				.forEach((el) => el.removeAttribute("data-dmm-btn-added"));
+			setTimeout(run, 200);
+			setTimeout(run, 1000);
+			setTimeout(run, 2500);
+		};
+		const wrapHist = (method) => {
+			const orig = history[method];
+			history[method] = function (...args) {
+				const ret = orig.apply(this, args);
+				rewipe();
+				return ret;
+			};
+		};
+		wrapHist("pushState");
+		wrapHist("replaceState");
+		window.addEventListener("popstate", rewipe);
 	}
 
 	// iCheckMovies functions
@@ -407,14 +548,7 @@
 
 		///// TRAKT TV /////
 	} else if (hostname === "trakt.tv") {
-		const isTraktTVEpisodePage = /\/episodes\/\d/.test(location.pathname);
-		if (isTraktTVEpisodePage) return;
-
-		const isTraktTVSinglePage = /^\/(shows|movies)\/.+/.test(location.pathname);
-
-		if (isTraktTVSinglePage) {
-			addButtonsToTraktTVSingleTitle();
-		}
+		setupTraktTV();
 
 		///// ICHECKMOVIES /////
 	} else if (hostname === "www.icheckmovies.com") {
