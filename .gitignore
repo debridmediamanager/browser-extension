@@ -16,5 +16,6 @@ test-results/
 */.Trashes
 
 .amo-upload-uuid
-*/.amo-upload-uuidCLAUDE.md
+*/.amo-upload-uuid
+CLAUDE.md
 AGENTS.md
