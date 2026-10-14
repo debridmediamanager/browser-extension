@@ -11,7 +11,7 @@ test.use({
 let browser;
 
 test.beforeAll(async () => {
-	browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
+	browser = await chromium.connectOverCDP(process.env.CDP_URL || "http://127.0.0.1:9222");
 });
 
 test.afterAll(async () => {
@@ -26,7 +26,7 @@ test.describe("Trakt.tv (CDP)", () => {
 			await page.goto("https://trakt.tv/shows/fallout", {
 				waitUntil: "domcontentloaded",
 			});
-			await page.waitForSelector("#summary-wrapper div > h1", {
+			await page.waitForSelector("h1.trakt-responsive-title", {
 				timeout: 30_000,
 			});
 			const btns = await injectAndWaitForButtons(page);
@@ -47,10 +47,10 @@ test.describe("Trakt.tv (CDP)", () => {
 		const page = await context.newPage();
 		try {
 			await page.goto(
-				"https://trakt.tv/movies/ghostbusters-frozen-empire-2024",
+				"https://app.trakt.tv/movies/ghostbusters-frozen-empire-2024",
 				{ waitUntil: "domcontentloaded" }
 			);
-			await page.waitForSelector("#summary-wrapper div > h1", {
+			await page.waitForSelector("h1.trakt-responsive-title", {
 				timeout: 30_000,
 			});
 			const btns = await injectAndWaitForButtons(page);
@@ -71,10 +71,10 @@ test.describe("Trakt.tv (CDP)", () => {
 		const page = await context.newPage();
 		try {
 			await page.goto(
-				"https://trakt.tv/shows/shogun-2024/seasons/1/episodes/1",
+				"https://app.trakt.tv/shows/shogun-2024/seasons/1/episodes/1",
 				{ waitUntil: "domcontentloaded" }
 			);
-			await page.waitForSelector("#summary-wrapper div > h1", {
+			await page.waitForSelector("h1.trakt-responsive-title", {
 				timeout: 30_000,
 			});
 			await injectScript(page);
