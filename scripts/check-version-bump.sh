@@ -11,8 +11,8 @@ if ! git diff --cached --name-only | grep -qx "$SCRIPT"; then
 fi
 
 # Get the committed (HEAD) version and the staged version
-OLD_VERSION=$(git show HEAD:"$SCRIPT" 2>/dev/null | grep -oP '// @version\s+\K\S+')
-NEW_VERSION=$(git diff --cached -- "$SCRIPT" | grep -oP '^\+// @version\s+\K\S+' || true)
+OLD_VERSION=$(git show HEAD:"$SCRIPT" 2>/dev/null | sed -n 's|^// @version[[:space:]]*||p')
+NEW_VERSION=$(git diff --cached -- "$SCRIPT" | sed -n 's|^+// @version[[:space:]]*||p')
 
 # If there's no version line change in the diff, the version wasn't bumped
 if [ -z "$NEW_VERSION" ]; then
