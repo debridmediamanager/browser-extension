@@ -1,5 +1,5 @@
 Summary:
-Add DMM buttons to IMDB, MDBList, TraktTV, Letterboxd, JustWatch, TheTVDB, Criticker, Metacritic, and torrent sites
+Add DMM buttons to IMDb, Trakt, TMDB, Letterboxd, MDBList, JustWatch, Wikipedia, MyAnimeList, AniList, more and torrent sites
 
 Description:
 Debrid Media Manager allows you to curate a media library of unlimited size. This browser extension simplifies the process for curators by adding DMM buttons directly to popular platforms and torrent indexers.
@@ -15,9 +15,14 @@ Simply search for the movie or TV show you want on any of these supported sites 
 - TheTVDB — movies and series
 - Criticker — single film pages
 - Metacritic — movies and TV shows
+- TMDB — movies and TV shows
+- Serializd, TVmaze — TV shows
+- Simkl — movies and shows
+- Wikipedia — film and TV articles, in every language
+- AniDB, MyAnimeList, AniList, Kitsu, LiveChart — anime, opening DMM's anime page
 - Any site with magnet links — adds a button next to each magnet link (e.g., 1337x, Nyaa, Torrentgalaxy)
 
 With MDBList, you can filter content using specific criteria, such as IMDB scores or country of origin, helping you discover new favorites. Experience a streamlined way to build and enjoy your media collection.
 
 Tags:
-streaming, torrent, video downloader, imdb, letterboxd, justwatch, metacritic
+streaming, torrent, video downloader, imdb, letterboxd, justwatch, metacritic, tmdb, myanimelist, anilist

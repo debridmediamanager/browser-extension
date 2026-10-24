@@ -2,6 +2,7 @@
 const { test, expect } = require("@playwright/test");
 const {
 	injectAndWaitForButtons,
+	injectScript,
 	extractDmmUrls,
 	checkDmmButtonVisibility,
 } = require("./helpers/inject");
@@ -471,5 +472,64 @@ test.describe("Metacritic", () => {
 		const urls = await extractDmmUrls(page);
 		expect(urls).toHaveLength(1);
 		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt15239678");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Sites whose id is looked up (page link, Trakt, TVmaze, Wikidata, AniList,
+// Kitsu) or that link DMM's anime pages
+// ---------------------------------------------------------------------------
+const DMM = "https://debridmediamanager.com";
+const X_DMM = "https://x.debridmediamanager.com";
+const LOOKUP_PAGES = [
+	["TMDB movie", "https://www.themoviedb.org/movie/693134-dune-part-two", "section.header .title h2", `${X_DMM}/tt15239678`],
+	["TMDB tv", "https://www.themoviedb.org/tv/126308-shogun", "section.header .title h2", `${X_DMM}/tt2788316`],
+	["Serializd show", "https://www.serializd.com/show/shogun-126308", "h1.big-heading", `${X_DMM}/tt2788316`],
+	["TVmaze show", "https://www.tvmaze.com/shows/37336/shogun", "h1", `${X_DMM}/tt2788316`],
+	["Simkl movie", "https://simkl.com/movies/1321382/dune-part-two", "h1", `${X_DMM}/tt15239678`],
+	["Wikipedia film", "https://en.wikipedia.org/wiki/Dune:_Part_Two", "#firstHeading", `${X_DMM}/tt15239678`],
+	["Wikipedia (de) film", "https://de.wikipedia.org/wiki/Dune:_Part_Two", "#firstHeading", `${X_DMM}/tt15239678`],
+	["AniDB anime", "https://anidb.net/anime/17617", "h1.anime", `${DMM}/anime/17617`],
+	["MyAnimeList anime", "https://myanimelist.net/anime/52991/Sousou_no_Frieren", "h1.title-name", `${DMM}/anime/mal-52991`],
+	["AniList anime", "https://anilist.co/anime/154587/Sousou-no-Frieren/", "h1", `${DMM}/anime/mal-52991`],
+	["Kitsu anime", "https://kitsu.app/anime/sousou-no-frieren", "section.media--title h3", `${DMM}/anime/mal-52991`],
+	["LiveChart anime", "https://www.livechart.me/anime/11376", "div.text-xl.font-medium.line-clamp-1:not(.md\\:hidden)", `${DMM}/anime/17617`],
+];
+
+test.describe("Lookup sites", () => {
+	for (const [name, url, title, expected] of LOOKUP_PAGES) {
+		test(name, async ({ page }) => {
+			await page.goto(url, { waitUntil: "domcontentloaded" });
+			await page.waitForSelector(title, { timeout: 30_000 });
+
+			await injectAndWaitForButtons(page);
+			const vis = await checkDmmButtonVisibility(page);
+			expect(vis.hidden).toEqual([]);
+			expect(await extractDmmUrls(page)).toEqual([expected]);
+		});
+	}
+
+	test("Wikipedia person gets no button", async ({ page }) => {
+		await page.goto("https://en.wikipedia.org/wiki/Timoth%C3%A9e_Chalamet", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector("#firstHeading", { timeout: 30_000 });
+		await injectScript(page);
+		await page.waitForTimeout(3_000);
+		await expect(page.locator("[data-dmm-btn-added]")).toHaveCount(0);
+	});
+
+	test("AniList client-side navigation follows the new title", async ({ page }) => {
+		await page.goto("https://anilist.co/anime/154587/Sousou-no-Frieren/", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector("h1", { timeout: 30_000 });
+		await injectAndWaitForButtons(page);
+
+		await page.click('a[href^="/anime/182255/"]');
+		await page.waitForURL(/\/anime\/182255\//);
+		await expect
+			.poll(() => extractDmmUrls(page), { timeout: 15_000 })
+			.toEqual([`${DMM}/anime/mal-59978`]);
 	});
 });

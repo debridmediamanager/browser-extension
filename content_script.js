@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.3
-// @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, and Bittorrent sites with magnet links
+// @version      1.8.4
+// @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
 // @match        *://*/*
@@ -363,6 +363,156 @@
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
+	// Sites that need an id looked up. Each entry names the title page path,
+	// the element the button joins and how to reach the DMM page; url() returns
+	// null when the page cannot say yet, so the next mutation tries again.
+	const imdbUrl = (id) => (/^tt\d+$/.test(id ?? "") ? `${X_DMM_HOST}/${id}` : null);
+	const animeUrl = (anidb, mal) =>
+		anidb ? `${DMM_HOST}/anime/${anidb}` : mal ? `${DMM_HOST}/anime/mal-${mal}` : null;
+	const getJson = (url, init) => fetch(url, init).then((res) => (res.ok ? res.json() : null));
+
+	// The title's IMDb id when the page links exactly one.
+	function pageImdbId() {
+		const ids = new Set(
+			Array.from(document.querySelectorAll('a[href*="imdb.com/title/tt"]'), (a) =>
+				a.href.match(/tt\d+/)?.[0]
+			)
+		);
+		return ids.size === 1 ? [...ids][0] : null;
+	}
+
+	function traktImdbUrl(idType, id, type) {
+		return getJson(`https://api.trakt.tv/search/${idType}/${id}?type=${type}`, {
+			headers: { "trakt-api-version": "2", "trakt-api-key": TRAKT_CLIENT_ID },
+		}).then((data) => imdbUrl(data?.[0]?.[type]?.ids?.imdb));
+	}
+
+	// Articles link IMDb in citations too, so take the id from the article's
+	// Wikidata item: a film's P345 is its tt id, a person's an nm id.
+	function wikipediaUrl() {
+		if (!document.querySelector('a[href*="imdb.com/title/tt"]')) return null;
+		const item = document.querySelector("#t-wikibase a")?.href?.match(/Q\d+/)?.[0];
+		if (!item) return null;
+		return getJson(
+			`https://www.wikidata.org/w/api.php?action=wbgetclaims&format=json&origin=*&property=P345&entity=${item}`
+		).then((data) => {
+			const ids = (data?.claims?.P345 ?? [])
+				.map((claim) => claim.mainsnak?.datavalue?.value)
+				.filter((id) => /^tt\d+$/.test(id));
+			return ids.length === 1 ? imdbUrl(ids[0]) : null;
+		});
+	}
+
+	function anilistUrl([, id]) {
+		return getJson("https://graphql.anilist.co", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ query: `{Media(id:${id},type:ANIME){idMal}}` }),
+		}).then((data) => animeUrl(null, data?.data?.Media?.idMal));
+	}
+
+	function kitsuUrl([, slug]) {
+		const query = /^\d+$/.test(slug)
+			? `anime/${slug}?include=mappings`
+			: `anime?filter[slug]=${encodeURIComponent(slug)}&include=mappings`;
+		return getJson(`https://kitsu.app/api/edge/${query}`).then((data) => {
+			const mapped = (site) =>
+				data?.included?.find((m) => m.attributes?.externalSite === site)?.attributes
+					?.externalId;
+			return animeUrl(mapped("anidb"), mapped("myanimelist/anime"));
+		});
+	}
+
+	function livechartUrl() {
+		const href = (selector) => document.querySelector(selector)?.href ?? "";
+		return animeUrl(
+			href('a[href*="anidb.net/a"]').match(/anidb\.net\/(?:anime\/|a)(\d+)/)?.[1],
+			href('a[href*="myanimelist.net/anime/"]').match(/anime\/(\d+)/)?.[1]
+		);
+	}
+
+	const LOOKUP_SITES = [
+		{
+			host: /^www\.themoviedb\.org$/,
+			path: /^\/(movie|tv)\/(\d+)/,
+			title: "section.header .title h2",
+			url: ([, kind, id]) => traktImdbUrl("tmdb", id, kind === "tv" ? "show" : "movie"),
+		},
+		{
+			host: /^www\.serializd\.com$/,
+			path: /^\/show\/[^/]*-(\d+)(?:\/|$)/,
+			title: "h1.big-heading",
+			url: ([, id]) => traktImdbUrl("tmdb", id, "show"),
+		},
+		{
+			host: /^www\.tvmaze\.com$/,
+			path: /^\/shows\/(\d+)/,
+			title: "h1",
+			url: ([, id]) =>
+				getJson(`https://api.tvmaze.com/shows/${id}`).then((d) => imdbUrl(d?.externals?.imdb)),
+		},
+		{
+			host: /^simkl\.com$/,
+			path: /^\/(movies|tv|anime)\/\d+/,
+			title: "h1",
+			url: () => imdbUrl(pageImdbId()),
+		},
+		{ host: /\.wikipedia\.org$/, path: /^\/wiki\//, title: "#firstHeading", url: wikipediaUrl },
+		{
+			host: /^anidb\.net$/,
+			path: /^\/anime\/(\d+)/,
+			title: "h1.anime",
+			url: ([, id]) => animeUrl(id),
+		},
+		{
+			host: /^myanimelist\.net$/,
+			path: /^\/anime\/(\d+)/,
+			title: "h1.title-name",
+			url: ([, id]) => animeUrl(null, id),
+		},
+		{ host: /^anilist\.co$/, path: /^\/anime\/(\d+)/, title: "h1", url: anilistUrl },
+		{
+			host: /^kitsu\.app$/,
+			path: /^\/anime\/([^/]+)/,
+			title: "section.media--title h3",
+			url: kitsuUrl,
+		},
+		{
+			host: /^www\.livechart\.me$/,
+			path: /^\/anime\/\d+/,
+			title: "div.text-xl.font-medium.line-clamp-1:not(.md\\:hidden)",
+			url: livechartUrl,
+		},
+	];
+
+	function addLookupButton(site) {
+		const match = location.pathname.match(site.path);
+		const key = match ? location.pathname : "";
+		// Single-page sites keep the title element across navigation.
+		document.querySelectorAll("button[data-dmm-lookup]").forEach((button) => {
+			if (button.dataset.dmmLookup === key) return;
+			const parent = button.parentElement;
+			delete parent.dataset.dmmKey;
+			parent.removeAttribute("data-dmm-btn-added");
+			button.remove();
+		});
+		const targetElement = document.querySelector(site.title);
+		if (!match || !targetElement || targetElement.dataset.dmmKey === key) return;
+
+		const result = site.url(match);
+		if (!result) return;
+		targetElement.dataset.dmmKey = key;
+		Promise.resolve(result)
+			.then((url) => {
+				if (!url || targetElement.dataset.dmmKey !== key || location.pathname !== key) return;
+				targetElement.setAttribute("data-dmm-btn-added", "true");
+				const button = createButton(SEARCH_BTN_LABEL, url);
+				button.dataset.dmmLookup = key;
+				targetElement.appendChild(button);
+			})
+			.catch(() => {});
+	}
+
 	// observer utility function
 	function changeObserver(cssSelector, addBtnFn) {
 		const targetNode = document.querySelector(cssSelector);
@@ -498,6 +648,11 @@
 		if (/^\/(movie|tv)\//.test(location.pathname)) {
 			addButtonsToMetacriticSingleTitle();
 		}
-
+	} else {
+		const site = LOOKUP_SITES.find((s) => s.host.test(hostname));
+		if (site) {
+			addLookupButton(site);
+			changeObserver("body", () => addLookupButton(site));
+		}
 	}
 })();
