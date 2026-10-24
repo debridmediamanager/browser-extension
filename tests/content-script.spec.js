@@ -533,3 +533,63 @@ test.describe("Lookup sites", () => {
 			.toEqual([`${DMM}/anime/mal-59978`]);
 	});
 });
+
+// ---------------------------------------------------------------------------
+// Season pages open the season on DMM
+// ---------------------------------------------------------------------------
+const GOT = `${DMM}/show/tt0944947`;
+const SEASON_PAGES = [
+	["IMDb episodes", "https://www.imdb.com/title/tt0944947/episodes/?season=3", "h1.ipc-title__text", `${GOT}/3`],
+	["JustWatch", "https://www.justwatch.com/us/tv-show/game-of-thrones/season-3", "h1", `${GOT}/3`],
+	["JustWatch localized", "https://www.justwatch.com/de/Serie/shogun-2024/Staffel-2", "h1", `${DMM}/show/tt2788316/2`],
+	["TheTVDB official order", "https://thetvdb.com/series/game-of-thrones/seasons/official/3", "h1", `${GOT}/3`],
+	["Metacritic", "https://www.metacritic.com/tv/game-of-thrones/season-3/", "div.hero-season-title__season", `${GOT}/3`],
+	["TMDB", "https://www.themoviedb.org/tv/1399-game-of-thrones/season/3", "section.header .title h2", `${GOT}/3`],
+	["Serializd", "https://www.serializd.com/show/Game-of-Thrones-1399/season/3626/3", "h1.big-heading", `${GOT}/3`],
+	["TVmaze", "https://www.tvmaze.com/seasons/63232/game-of-thrones-season-8", "h1", `${GOT}/8`],
+];
+
+test.describe("Season pages", () => {
+	for (const [name, url, title, expected] of SEASON_PAGES) {
+		test(name, async ({ page }) => {
+			await page.goto(url, { waitUntil: "domcontentloaded" });
+			await page.waitForSelector(title, { timeout: 30_000 });
+
+			await injectAndWaitForButtons(page);
+			expect(await extractDmmUrls(page)).toEqual([expected]);
+		});
+	}
+
+	test("IMDb season tabs follow the season", async ({ page }) => {
+		await page.context().addCookies(IMDB_COOKIES);
+		await page.goto("https://www.imdb.com/title/tt0944947/episodes/?season=3", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector("h1.ipc-title__text", { timeout: 30_000 });
+		await injectAndWaitForButtons(page);
+
+		await page.click('a[href*="episodes/?season=5"]');
+		await page.waitForURL(/season=5/);
+		await expect
+			.poll(() => extractDmmUrls(page), { timeout: 15_000 })
+			.toEqual([`${GOT}/5`]);
+	});
+
+	test("IMDb pages without a title element do not throw", async ({ page }) => {
+		await page.context().addCookies(IMDB_COOKIES);
+		await page.goto("https://www.imdb.com/title/tt0944947/reviews/", {
+			waitUntil: "domcontentloaded",
+		});
+		expect(await injectScript(page)).toBe(true);
+	});
+
+	test("TheTVDB DVD order gets no button", async ({ page }) => {
+		await page.goto("https://thetvdb.com/series/game-of-thrones/seasons/dvd/3", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector("h1", { timeout: 30_000 });
+		await injectScript(page);
+		await page.waitForTimeout(3_000);
+		await expect(page.locator("[data-dmm-btn-added]")).toHaveCount(0);
+	});
+});

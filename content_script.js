@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.4
+// @version      1.8.5
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -15,6 +15,12 @@
 	const DMM_HOST = "https://debridmediamanager.com";
 	const X_DMM_HOST = "https://x.debridmediamanager.com";
 	const SEARCH_BTN_LABEL = "DMM🔎";
+
+	// A page about one season of a show opens that season on DMM.
+	const dmmUrl = (imdbId, season) =>
+		/^[1-9]\d*$/.test(season ?? "")
+			? `${DMM_HOST}/show/${imdbId}/${season}`
+			: `${X_DMM_HOST}/${imdbId}`;
 
 	function createButton(text, url) {
 		const button = document.createElement("button");
@@ -107,7 +113,7 @@
 			"section.ipc-page-background h1 > span"
 		);
 
-		if (targetElement && targetElement.hasAttribute("data-dmm-btn-added"))
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added"))
 			return;
 		targetElement.setAttribute("data-dmm-btn-added", "true");
 
@@ -167,8 +173,8 @@
 		if (!imdbId) return;
 
 		targetElement.setAttribute("data-dmm-btn-added", "true");
-		const searchUrl = `${X_DMM_HOST}/${imdbId}`;
-		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
+		const season = location.pathname.match(/\/season\/(\d+)\/?$/)?.[1];
+		addButtonToElement(targetElement, SEARCH_BTN_LABEL, dmmUrl(imdbId, season));
 	}
 
 	function addButtonsToMDBListSearchResults() {
@@ -218,8 +224,14 @@
 			return;
 		}
 		const [, kind, slug] = match;
-		if (targetElement.dataset.dmmSlug === slug) return;
-		targetElement.dataset.dmmSlug = slug;
+		const season =
+			kind === "shows"
+				? new URLSearchParams(location.search).get("season") ??
+					location.pathname.match(/\/seasons\/(\d+)/)?.[1]
+				: null;
+		const key = `${slug}:${season}`;
+		if (targetElement.dataset.dmmSlug === key) return;
+		targetElement.dataset.dmmSlug = key;
 		targetElement.querySelector("button[data-dmm-trakt]")?.remove();
 
 		fetch(`https://api.trakt.tv/${kind}/${slug}`, {
@@ -228,9 +240,9 @@
 			.then((res) => (res.ok ? res.json() : null))
 			.then((data) => {
 				const imdbId = data?.ids?.imdb;
-				if (!imdbId || targetElement.dataset.dmmSlug !== slug) return;
+				if (!imdbId || targetElement.dataset.dmmSlug !== key) return;
 				targetElement.setAttribute("data-dmm-btn-added", "true");
-				const button = createButton(SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+				const button = createButton(SEARCH_BTN_LABEL, dmmUrl(imdbId, season));
 				button.dataset.dmmTrakt = "true";
 				targetElement.appendChild(button);
 			})
@@ -296,7 +308,7 @@
 		}
 	}
 
-	function addButtonsToJustWatchSingleTitle(imdbId, loadPath) {
+	function addButtonsToJustWatchSingleTitle(url, loadPath) {
 		const targetElement = document.querySelector("h1");
 		if (!targetElement || targetElement.dataset.dmmPath === location.pathname)
 			return;
@@ -305,7 +317,7 @@
 		targetElement.removeAttribute("data-dmm-btn-added");
 		if (location.pathname !== loadPath) return;
 		targetElement.setAttribute("data-dmm-btn-added", "true");
-		const button = createButton(SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+		const button = createButton(SEARCH_BTN_LABEL, url);
 		button.dataset.dmmJw = "true";
 		targetElement.appendChild(button);
 	}
@@ -331,9 +343,7 @@
 	}
 
 	// Metacritic functions
-	function addButtonsToMetacriticSingleTitle() {
-		const targetElement = document.querySelector("h1");
-		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added")) return;
+	function getMetacriticImdbId() {
 		let imdbId = null;
 		document.querySelectorAll("script:not([src])").forEach((s) => {
 			if (!imdbId) {
@@ -341,6 +351,13 @@
 				if (match) imdbId = match[0];
 			}
 		});
+		return imdbId;
+	}
+
+	function addButtonsToMetacriticSingleTitle() {
+		const targetElement = document.querySelector("h1");
+		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added")) return;
+		const imdbId = getMetacriticImdbId();
 		if (!imdbId) return;
 		targetElement.setAttribute("data-dmm-btn-added", "true");
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
@@ -366,7 +383,7 @@
 	// Sites that need an id looked up. Each entry names the title page path,
 	// the element the button joins and how to reach the DMM page; url() returns
 	// null when the page cannot say yet, so the next mutation tries again.
-	const imdbUrl = (id) => (/^tt\d+$/.test(id ?? "") ? `${X_DMM_HOST}/${id}` : null);
+	const imdbUrl = (id, season) => (/^tt\d+$/.test(id ?? "") ? dmmUrl(id, season) : null);
 	const animeUrl = (anidb, mal) =>
 		anidb ? `${DMM_HOST}/anime/${anidb}` : mal ? `${DMM_HOST}/anime/mal-${mal}` : null;
 	const getJson = (url, init) => fetch(url, init).then((res) => (res.ok ? res.json() : null));
@@ -381,10 +398,10 @@
 		return ids.size === 1 ? [...ids][0] : null;
 	}
 
-	function traktImdbUrl(idType, id, type) {
+	function traktImdbUrl(idType, id, type, season) {
 		return getJson(`https://api.trakt.tv/search/${idType}/${id}?type=${type}`, {
 			headers: { "trakt-api-version": "2", "trakt-api-key": TRAKT_CLIENT_ID },
-		}).then((data) => imdbUrl(data?.[0]?.[type]?.ids?.imdb));
+		}).then((data) => imdbUrl(data?.[0]?.[type]?.ids?.imdb, season));
 	}
 
 	// Articles link IMDb in citations too, so take the id from the article's
@@ -402,6 +419,48 @@
 			return ids.length === 1 ? imdbUrl(ids[0]) : null;
 		});
 	}
+
+	// A TVmaze season names its show only through its episodes.
+	function tvmazeUrl([, kind, id]) {
+		const show = (showId, season) =>
+			getJson(`https://api.tvmaze.com/shows/${showId}`).then((d) =>
+				imdbUrl(d?.externals?.imdb, season)
+			);
+		if (kind === "shows") return show(id);
+		return getJson(`https://api.tvmaze.com/seasons/${id}/episodes`).then((episodes) => {
+			const showId = episodes?.[0]?._links?.show?.href?.match(/\/shows\/(\d+)$/)?.[1];
+			return showId ? show(showId, episodes[0].season) : null;
+		});
+	}
+
+	// Season pages on sites handled above, sent through addLookupButton.
+	const IMDB_EPISODES = {
+		path: /^\/title\/(tt\d+)\/episodes/,
+		title: "h1.ipc-title__text",
+		url: ([, id]) => imdbUrl(id, new URLSearchParams(location.search).get("season")),
+	};
+	// Only the official order numbers seasons the way DMM does.
+	const THETVDB_SEASON = {
+		path: /^\/series\/([^/]+)\/seasons\/official\/(\d+)/,
+		title: "h1",
+		url: ([, slug, season]) =>
+			fetch(`/series/${slug}`)
+				.then((res) => (res.ok ? res.text() : ""))
+				.then((html) =>
+					imdbUrl(
+						new DOMParser()
+							.parseFromString(html, "text/html")
+							.querySelector('a[href*="imdb.com/title/"]')
+							?.href?.match(/tt\d+/)?.[0],
+						season
+					)
+				),
+	};
+	const METACRITIC_SEASON = {
+		path: /^\/tv\/[^/]+\/season-(\d+)\/?$/,
+		title: "div.hero-season-title__season",
+		url: ([, season]) => imdbUrl(getMetacriticImdbId(), season),
+	};
 
 	function anilistUrl([, id]) {
 		return getJson("https://graphql.anilist.co", {
@@ -434,22 +493,22 @@
 	const LOOKUP_SITES = [
 		{
 			host: /^www\.themoviedb\.org$/,
-			path: /^\/(movie|tv)\/(\d+)/,
+			path: /^\/(movie|tv)\/(\d+)(?:[^/]*\/season\/(\d+)\/?$)?/,
 			title: "section.header .title h2",
-			url: ([, kind, id]) => traktImdbUrl("tmdb", id, kind === "tv" ? "show" : "movie"),
+			url: ([, kind, id, season]) =>
+				traktImdbUrl("tmdb", id, kind === "tv" ? "show" : "movie", season),
 		},
 		{
 			host: /^www\.serializd\.com$/,
-			path: /^\/show\/[^/]*-(\d+)(?:\/|$)/,
+			path: /^\/show\/[^/]*-(\d+)(?:\/season\/\d+\/(\d+)\/?$|\/|$)/,
 			title: "h1.big-heading",
-			url: ([, id]) => traktImdbUrl("tmdb", id, "show"),
+			url: ([, id, season]) => traktImdbUrl("tmdb", id, "show", season),
 		},
 		{
 			host: /^www\.tvmaze\.com$/,
-			path: /^\/shows\/(\d+)/,
+			path: /^\/(shows|seasons)\/(\d+)/,
 			title: "h1",
-			url: ([, id]) =>
-				getJson(`https://api.tvmaze.com/shows/${id}`).then((d) => imdbUrl(d?.externals?.imdb)),
+			url: tvmazeUrl,
 		},
 		{
 			host: /^simkl\.com$/,
@@ -487,7 +546,7 @@
 
 	function addLookupButton(site) {
 		const match = location.pathname.match(site.path);
-		const key = match ? location.pathname : "";
+		const key = match ? location.pathname + location.search : "";
 		// Single-page sites keep the title element across navigation.
 		document.querySelectorAll("button[data-dmm-lookup]").forEach((button) => {
 			if (button.dataset.dmmLookup === key) return;
@@ -504,7 +563,12 @@
 		targetElement.dataset.dmmKey = key;
 		Promise.resolve(result)
 			.then((url) => {
-				if (!url || targetElement.dataset.dmmKey !== key || location.pathname !== key) return;
+				if (
+					!url ||
+					targetElement.dataset.dmmKey !== key ||
+					location.pathname + location.search !== key
+				)
+					return;
 				targetElement.setAttribute("data-dmm-btn-added", "true");
 				const button = createButton(SEARCH_BTN_LABEL, url);
 				button.dataset.dmmLookup = key;
@@ -561,7 +625,10 @@
 			/^\/list\/ls/.test(location.pathname);
 		const isIMDBChartPage = /^\/chart\//.test(location.pathname);
 
-		if (isIMDBSingleTitlePage) {
+		if (IMDB_EPISODES.path.test(location.pathname)) {
+			addLookupButton(IMDB_EPISODES);
+			changeObserver("body", () => addLookupButton(IMDB_EPISODES));
+		} else if (isIMDBSingleTitlePage) {
 			addButtonsToIMDBSingleTitle();
 			changeObserver("section.ipc-page-background", addButtonsToIMDBSingleTitle);
 		} else if (isIMDBListPage) {
@@ -578,7 +645,10 @@
 			/^\/list\/ls/.test(location.pathname);
 		const isIMDBChartPage = /^\/chart\//.test(location.pathname);
 
-		if (isIMDBSingleTitlePage) {
+		if (IMDB_EPISODES.path.test(location.pathname)) {
+			addLookupButton(IMDB_EPISODES);
+			changeObserver("body", () => addLookupButton(IMDB_EPISODES));
+		} else if (isIMDBSingleTitlePage) {
 			addButtonsToIMDBSingleTitle();
 			changeObserver("section.ipc-page-background", addButtonsToIMDBSingleTitle);
 		} else if (isIMDBListPage) {
@@ -627,13 +697,18 @@
 		const imdbId = getJustWatchImdbId();
 		if (imdbId) {
 			const loadPath = location.pathname;
-			addButtonsToJustWatchSingleTitle(imdbId, loadPath);
-			changeObserver("#app", () => addButtonsToJustWatchSingleTitle(imdbId, loadPath));
+			// Season pages: /us/tv-show/<slug>/season-3, /de/Serie/<slug>/Staffel-3
+			const season = loadPath.match(/^(?:\/[^/]+){3}\/[^/]*-(\d+)\/?$/)?.[1];
+			const url = dmmUrl(imdbId, season);
+			addButtonsToJustWatchSingleTitle(url, loadPath);
+			changeObserver("#app", () => addButtonsToJustWatchSingleTitle(url, loadPath));
 		}
 
 		///// THETVDB /////
 	} else if (hostname === "thetvdb.com") {
-		if (/^\/(movies|series)\//.test(location.pathname)) {
+		if (THETVDB_SEASON.path.test(location.pathname)) {
+			addLookupButton(THETVDB_SEASON);
+		} else if (/^\/(movies|series)\//.test(location.pathname)) {
 			addButtonsToTheTVDBSingleTitle();
 		}
 
@@ -645,7 +720,10 @@
 
 		///// METACRITIC /////
 	} else if (hostname === "www.metacritic.com") {
-		if (/^\/(movie|tv)\//.test(location.pathname)) {
+		if (METACRITIC_SEASON.path.test(location.pathname)) {
+			addLookupButton(METACRITIC_SEASON);
+			changeObserver("body", () => addLookupButton(METACRITIC_SEASON));
+		} else if (/^\/(movie|tv)\//.test(location.pathname)) {
 			addButtonsToMetacriticSingleTitle();
 		}
 	} else {

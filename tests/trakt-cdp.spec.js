@@ -23,6 +23,7 @@ test.describe("Trakt.tv (CDP)", () => {
 		const context = browser.contexts()[0] || await browser.newContext();
 		const page = await context.newPage();
 		try {
+			// Trakt Web v3 opens a show on ?season=1.
 			await page.goto("https://trakt.tv/shows/fallout", {
 				waitUntil: "domcontentloaded",
 			});
@@ -33,10 +34,9 @@ test.describe("Trakt.tv (CDP)", () => {
 			await expect(btns).toHaveCount(1);
 
 			const urls = await extractDmmUrls(page);
-			expect(urls).toHaveLength(1);
-			expect(urls[0]).toMatch(
-				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
-			);
+			expect(urls).toEqual([
+				"https://debridmediamanager.com/show/tt12637874/1",
+			]);
 		} finally {
 			await page.close();
 		}
@@ -61,6 +61,26 @@ test.describe("Trakt.tv (CDP)", () => {
 			expect(urls[0]).toMatch(
 				/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/
 			);
+		} finally {
+			await page.close();
+		}
+	});
+
+	test("season page", async () => {
+		const context = browser.contexts()[0] || await browser.newContext();
+		const page = await context.newPage();
+		try {
+			await page.goto(
+				"https://app.trakt.tv/shows/game-of-thrones?season=3",
+				{ waitUntil: "domcontentloaded" }
+			);
+			await page.waitForSelector("h1.trakt-responsive-title", {
+				timeout: 30_000,
+			});
+			await injectAndWaitForButtons(page);
+			expect(await extractDmmUrls(page)).toEqual([
+				"https://debridmediamanager.com/show/tt0944947/3",
+			]);
 		} finally {
 			await page.close();
 		}
