@@ -5,7 +5,7 @@ EXTENSION_DIR="$(pwd)/firefox"
 
 cp -fr "$(pwd)/icons" "$EXTENSION_DIR"
 cp -f "$(pwd)/content_script.js" "$EXTENSION_DIR/content_script.js"
-jq '. += {"browser_specific_settings": {"gecko": {"id": "browser.ext@debridmediamanager.com", "strict_min_version": "140.0", "data_collection_permissions": {"required": ["none"]}}, "gecko_android": {"strict_min_version": "142.0"}}}' manifest.json > "$EXTENSION_DIR/manifest.json"
+jq '. += {"browser_specific_settings": {"gecko": {"id": "browser.ext@debridmediamanager.com", "strict_min_version": "140.0", "data_collection_permissions": {"required": ["browsingActivity"]}}, "gecko_android": {"strict_min_version": "142.0"}}}' manifest.json > "$EXTENSION_DIR/manifest.json"
 
 # Define the output directory for the packaged extension
 OUTPUT_DIR="$EXTENSION_DIR/web-ext-artifacts"
