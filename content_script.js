@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.2
+// @version      1.8.3
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -276,18 +276,38 @@
 	}
 
 	// JustWatch functions
-	function addButtonsToJustWatchSingleTitle() {
+	// JustWatch is Nuxt: __NUXT_DATA__ is a flat array where object values are
+	// indices into it. It describes only the page that was loaded, so a title
+	// reached by client-side navigation gets no button rather than a wrong one.
+	function getJustWatchImdbId() {
+		try {
+			const data = JSON.parse(
+				document.getElementById("__NUXT_DATA__")?.textContent || "[]"
+			);
+			const ids = new Set(
+				data
+					.filter((v) => v && typeof v === "object" && "imdbId" in v)
+					.map((v) => data[v.imdbId])
+					.filter((id) => /^tt\d+$/.test(id))
+			);
+			return ids.size === 1 ? [...ids][0] : null;
+		} catch {
+			return null;
+		}
+	}
+
+	function addButtonsToJustWatchSingleTitle(imdbId, loadPath) {
 		const targetElement = document.querySelector("h1");
-		if (!targetElement || targetElement.hasAttribute("data-dmm-btn-added")) return;
-		// Extract from Apollo cache in inline scripts
-		let imdbId = null;
-		document.querySelectorAll("script:not([src])").forEach((s) => {
-			const match = s.textContent.match(/"imdbId":"(tt\d+)"/);
-			if (match) imdbId = match[1];
-		});
-		if (!imdbId) return;
+		if (!targetElement || targetElement.dataset.dmmPath === location.pathname)
+			return;
+		targetElement.dataset.dmmPath = location.pathname;
+		targetElement.querySelector("button[data-dmm-jw]")?.remove();
+		targetElement.removeAttribute("data-dmm-btn-added");
+		if (location.pathname !== loadPath) return;
 		targetElement.setAttribute("data-dmm-btn-added", "true");
-		addButtonToElement(targetElement, SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+		const button = createButton(SEARCH_BTN_LABEL, `${X_DMM_HOST}/${imdbId}`);
+		button.dataset.dmmJw = "true";
+		targetElement.appendChild(button);
 	}
 
 	// TheTVDB functions
@@ -453,9 +473,12 @@
 
 		///// JUSTWATCH /////
 	} else if (hostname === "www.justwatch.com") {
-		if (/\/(movie|tv-show)\//.test(location.pathname)) {
-			addButtonsToJustWatchSingleTitle();
-			changeObserver("#app", addButtonsToJustWatchSingleTitle);
+		// Title paths are localized (/de/Film/, /de/Serie/), so key on the data.
+		const imdbId = getJustWatchImdbId();
+		if (imdbId) {
+			const loadPath = location.pathname;
+			addButtonsToJustWatchSingleTitle(imdbId, loadPath);
+			changeObserver("#app", () => addButtonsToJustWatchSingleTitle(imdbId, loadPath));
 		}
 
 		///// THETVDB /////

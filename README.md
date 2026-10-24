@@ -56,11 +56,11 @@ URLs for testing:
 - https://letterboxd.com/film/the-idea-of-you-2024/
 - https://letterboxd.com/film/furiosa-a-mad-max-saga/
 
-- https://www.justwatch.com/us/tv-show/ripley -- not working
-- https://www.justwatch.com/de/Film/Avatar-Aufbruch-nach-Pandora -- not working
-- https://www.justwatch.com/de/Serie/shogun-2024 -- not working
-- https://www.justwatch.com/ph/tv-show/x-men-97 -- not working
-- https://www.justwatch.com/ph/tv-show/x-men-97/season-1 -- not working
+- https://www.justwatch.com/us/tv-show/ripley
+- https://www.justwatch.com/de/Film/Avatar-Aufbruch-nach-Pandora
+- https://www.justwatch.com/de/Serie/shogun-2024
+- https://www.justwatch.com/ph/tv-show/x-men-97
+- https://www.justwatch.com/ph/tv-show/x-men-97/season-1
 
 - https://www.themoviedb.org/tv/17937-ghost-adventures -- not working
 - https://www.themoviedb.org/movie/823464-godzilla-x-kong-the-new-empire -- not working

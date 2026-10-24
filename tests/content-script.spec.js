@@ -342,6 +342,49 @@ test.describe("JustWatch", () => {
 		expect(urls).toHaveLength(1);
 		expect(urls[0]).toBe("https://x.debridmediamanager.com/tt15239678");
 	});
+
+	test("tv show page", async ({ page }) => {
+		await page.goto("https://www.justwatch.com/us/tv-show/ripley", {
+			waitUntil: "load",
+		});
+		await page.waitForSelector("h1", { timeout: 30_000 });
+
+		await injectAndWaitForButtons(page);
+		const urls = await extractDmmUrls(page);
+		expect(urls).toEqual(["https://x.debridmediamanager.com/tt11016042"]);
+	});
+
+	test("localized movie page", async ({ page }) => {
+		await page.goto(
+			"https://www.justwatch.com/de/Film/Avatar-Aufbruch-nach-Pandora",
+			{ waitUntil: "load" }
+		);
+		await page.waitForSelector("h1", { timeout: 30_000 });
+
+		await injectAndWaitForButtons(page);
+		const urls = await extractDmmUrls(page);
+		expect(urls).toEqual(["https://x.debridmediamanager.com/tt0499549"]);
+	});
+
+	test("client-side navigation drops the stale button", async ({ page }) => {
+		await page.goto("https://www.justwatch.com/us/movie/dune-part-two", {
+			waitUntil: "load",
+		});
+		await page.waitForSelector("h1", { timeout: 30_000 });
+		await injectAndWaitForButtons(page);
+
+		// The page's data stays from the first title, so no button may point at it.
+		const path = await page.evaluate(() => {
+			const a = [...document.querySelectorAll('a[href*="/us/movie/"]')].find(
+				(a) => !a.href.includes("dune-part-two")
+			);
+			a.click();
+			return new URL(a.href).pathname;
+		});
+		await page.waitForURL((url) => url.pathname === path);
+		await page.waitForTimeout(2_000);
+		expect(await extractDmmUrls(page)).toEqual([]);
+	});
 });
 
 // ---------------------------------------------------------------------------
