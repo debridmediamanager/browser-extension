@@ -68,3 +68,14 @@ URLs for testing:
 - https://en.wikipedia.org/wiki/Timoth%C3%A9e_Chalamet -- no button (a person)
 - https://anilist.co/anime/154587/Sousou-no-Frieren/
 - https://www.livechart.me/anime/11376
+
+- https://www.imdb.com/title/tt2178784/ -- episode, opens season 3
+- https://www.imdb.com/name/nm3154303/
+- https://www.imdb.com/calendar/
+- https://myanimelist.net/topanime.php
+- https://myanimelist.net/anime/season
+- https://www.themoviedb.org/movie
+- https://www.tvmaze.com/shows
+- https://anilist.co/search/anime/trending
+- https://web.stremio.com/#/detail/series/tt0944947
+- https://www.limetorrents.lol/search/all/dune/ -- torrent-cache links

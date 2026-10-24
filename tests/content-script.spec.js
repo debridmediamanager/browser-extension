@@ -593,3 +593,130 @@ test.describe("Season pages", () => {
 		await expect(page.locator("[data-dmm-btn-added]")).toHaveCount(0);
 	});
 });
+
+// ---------------------------------------------------------------------------
+// Episode pages open their season; Stremio Web
+// ---------------------------------------------------------------------------
+const EPISODE_PAGES = [
+	["IMDb episode", "https://www.imdb.com/title/tt2178784/", "section.ipc-page-background h1 > span", `${GOT}/3`],
+	["TMDB episode", "https://www.themoviedb.org/tv/1399-game-of-thrones/season/3/episode/2", "h3:has(> a.no_click.open)", `${GOT}/3`],
+	["Serializd episode", "https://www.serializd.com/show/Game-of-Thrones-1399/season/3626/3/episode/2", "div.big-heading", `${GOT}/3`],
+	["Metacritic episode", "https://www.metacritic.com/tv/game-of-thrones/season-3/episode-1-valar-dohaeris/", "div.hero-episode-title", `${GOT}/3`],
+	["TheTVDB episode", "https://thetvdb.com/series/game-of-thrones/episodes/4517458", "h1", `${GOT}/3`],
+	["Simkl episode", "https://simkl.com/tv/17465/game-of-thrones/season-3/episode-2/", "h1", `${GOT}/3`],
+	["TVmaze episode", "https://www.tvmaze.com/episodes/4952/game-of-thrones-1x01-winter-is-coming", "h1", `${GOT}/1`],
+	["Stremio series", "https://web.stremio.com/#/detail/series/tt0944947", "div[class*='runtime-release-info-container']", `${X_DMM}/tt0944947`],
+	["Stremio movie", "https://web.stremio.com/#/detail/movie/tt15239678/tt15239678", "div[class*='runtime-release-info-container']", `${X_DMM}/tt15239678`],
+];
+
+test.describe("Episode pages and Stremio", () => {
+	for (const [name, url, title, expected] of EPISODE_PAGES) {
+		test(name, async ({ page, context }) => {
+			await context.addCookies(IMDB_COOKIES);
+			await page.goto(url, { waitUntil: "domcontentloaded" });
+			await page.waitForSelector(title, { timeout: 30_000 });
+
+			await injectAndWaitForButtons(page);
+			expect(await extractDmmUrls(page)).toEqual([expected]);
+		});
+	}
+});
+
+// ---------------------------------------------------------------------------
+// List pages: IMDb actor and calendar pages, grids, torrent-cache links
+// ---------------------------------------------------------------------------
+
+// Grid buttons open a blank tab inside the click and point it at DMM once
+// the id is looked up; record where each tab is sent.
+async function clickGridButtons(page, count) {
+	return page.evaluate(async (count) => {
+		const urls = [];
+		const open = window.open;
+		// MyAnimeList buttons open their URL directly; the rest send a blank tab.
+		window.open = (url) => {
+			if (url) urls.push(url);
+			return { location: { set href(url) { urls.push(url); } }, close() {} };
+		};
+		[...document.querySelectorAll("button[data-dmm-grid]")]
+			.slice(0, count)
+			.forEach((button) => button.click());
+		const deadline = Date.now() + 15_000;
+		while (urls.length < count && Date.now() < deadline)
+			await new Promise((resolve) => setTimeout(resolve, 200));
+		window.open = open;
+		return urls;
+	}, count);
+}
+
+const GRID_PAGES = [
+	["MyAnimeList top anime", "https://myanimelist.net/topanime.php", /^https:\/\/debridmediamanager\.com\/anime\/mal-\d+$/],
+	["MyAnimeList season", "https://myanimelist.net/anime/season", /^https:\/\/debridmediamanager\.com\/anime\/mal-\d+$/],
+	["TMDB popular movies", "https://www.themoviedb.org/movie", /^https:\/\/x\.debridmediamanager\.com\/tt\d+$/],
+	["TMDB popular tv", "https://www.themoviedb.org/tv", /^https:\/\/x\.debridmediamanager\.com\/tt\d+$/],
+	["TVmaze shows", "https://www.tvmaze.com/shows", /^https:\/\/x\.debridmediamanager\.com\/tt\d+$/],
+	["AniList trending", "https://anilist.co/search/anime/trending", /^https:\/\/debridmediamanager\.com\/anime\/mal-\d+$/],
+];
+
+test.describe("List pages", () => {
+	for (const [name, url, expected] of GRID_PAGES) {
+		test(name, async ({ page }) => {
+			await page.goto(url, { waitUntil: "domcontentloaded" });
+			await injectScript(page);
+			const buttons = page.locator("button[data-dmm-grid]");
+			await buttons.first().waitFor({ state: "attached", timeout: 15_000 });
+
+			// One visible button per title.
+			const ids = await buttons.evaluateAll((all) =>
+				all.filter((b) => b.getClientRects().length).map((b) => b.dataset.dmmGrid)
+			);
+			expect(ids.length).toBe(await buttons.count());
+			expect(new Set(ids).size).toBe(ids.length);
+
+			const urls = await clickGridButtons(page, 2);
+			expect(urls).toHaveLength(2);
+			for (const url of urls) expect(url).toMatch(expected);
+		});
+	}
+
+	for (const [name, url] of [
+		["IMDb actor filmography", "https://www.imdb.com/name/nm3154303/"],
+		["IMDb release calendar", "https://www.imdb.com/calendar/"],
+	]) {
+		test(name, async ({ page, context }) => {
+			await context.addCookies(IMDB_COOKIES);
+			await page.goto(url, { waitUntil: "domcontentloaded" });
+			await page.waitForSelector(".ipc-metadata-list-summary-item", {
+				state: "attached",
+				timeout: 30_000,
+			});
+
+			const btns = await injectAndWaitForButtons(page);
+			expect(await btns.count()).toBeGreaterThan(10);
+			const urls = await extractDmmUrls(page);
+			for (const url of urls) expect(url).toMatch(/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/);
+		});
+	}
+
+	test("LimeTorrents torrent-cache links", async ({ page }) => {
+		await page.goto("https://www.limetorrents.lol/search/all/dune/", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector('a[href*=".torrent"]', { timeout: 30_000 });
+		await injectScript(page);
+
+		const urls = await page.evaluate(() => {
+			const urls = [];
+			const open = window.open;
+			window.open = (url) => urls.push(url);
+			document
+				.querySelectorAll("button")
+				.forEach((b) => b.textContent === "DMM🧲" && b.click());
+			window.open = open;
+			return urls;
+		});
+		expect(urls.length).toBeGreaterThan(10);
+		expect(new Set(urls).size).toBe(urls.length);
+		for (const url of urls)
+			expect(url).toMatch(/^https:\/\/debridmediamanager\.com\/library\?addMagnet=[0-9a-f]{40}$/);
+	});
+});

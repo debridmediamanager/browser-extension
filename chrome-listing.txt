@@ -17,7 +17,10 @@ Simply search for the movie or TV show you want on any of these supported sites 
 - Simkl — movies and shows
 - Wikipedia — film and TV articles, in every language
 - AniDB, MyAnimeList, AniList, Kitsu, LiveChart — anime, opening DMM's anime page
-- Any site with magnet links — adds a button next to each magnet link (e.g., 1337x, Nyaa, Torrentgalaxy)
+- Season and episode pages open that season on DMM
+- Stremio Web — movies and series
+- List pages on IMDb (actors, release calendar), TMDB, TVmaze, MyAnimeList and AniList — a button beside every title
+- Any site with magnet links or torrent-cache links that carry the info hash — adds a button next to each (e.g., 1337x, Nyaa, LimeTorrents)
 
 With MDBList, you can filter content using specific criteria, such as IMDB scores or country of origin, helping you discover new favorites. Experience a streamlined way to build and enjoy your media collection.
 

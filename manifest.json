@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Debrid Media Manager",
-    "version": "1.8.5",
+    "version": "1.8.6",
     "description": "Add DMM buttons to IMDb, Trakt, TMDB, Letterboxd, MDBList, JustWatch, Wikipedia, MyAnimeList, AniList, more and torrent sites",
     "content_scripts": [
         {
