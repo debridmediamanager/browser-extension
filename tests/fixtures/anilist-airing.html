@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- AniList home "Airing" cards as its media-preview-card template renders them
+     (anilist.co/js/main.23df1907.js, 2026-10-25): the cover is a link with a
+     lazily set background image holding the countdown; the title link shows
+     only on hover. -->
+<style>
+	.list-preview { display: grid; grid-template-columns: repeat(5, 85px); gap: 20px; }
+	.media-preview-card { display: grid; grid-template-rows: 115px auto; position: relative; }
+	.cover { display: block; background-size: cover; }
+	.media-preview-card.small .content { display: none; }
+</style>
+<div class="list-preview">
+	<div class="media-preview-card small">
+		<a href="/anime/171018/Dandadan-2nd-Season/" class="cover" lazy="loaded"
+			style="background-image: url(&quot;https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx171018.jpg&quot;);">
+			<div class="image-text"><div><div class="countdown">Ep 4 1d 20h</div></div></div>
+		</a>
+		<div class="content">
+			<a href="/anime/171018/Dandadan-2nd-Season/" class="title">Dandadan 2nd Season</a>
+			<div class="info">Progress: 3/12</div>
+		</div>
+	</div>
+	<div class="media-preview-card small">
+		<a href="/anime/235/Detective-Conan/" class="cover" lazy="loading">
+			<div class="image-text"><div><div class="countdown">Ep 1218 5d 15h</div></div></div>
+		</a>
+		<div class="content">
+			<a href="/anime/235/Detective-Conan/" class="title">Detective Conan</a>
+			<div class="info">Progress: 1217/?</div>
+		</div>
+	</div>
+</div>

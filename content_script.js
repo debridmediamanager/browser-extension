@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.7
+// @version      1.8.8
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -644,6 +644,8 @@
 		if (titlePage?.test(location.pathname)) return;
 		document.querySelectorAll("a[href]:not([data-dmm-grid])").forEach((link) => {
 			if (link.host !== location.host || link.querySelector("img")) return;
+			// Covers drawn as a (lazy) background image, like AniList's airing cards.
+			if (link.style.backgroundImage || link.hasAttribute("lazy")) return;
 			// Hidden links (collapsed sections) wait until they are shown.
 			if (!link.textContent.trim() || !link.getClientRects().length) return;
 			const match = link.pathname.match(grid.link);

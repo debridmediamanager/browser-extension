@@ -1,4 +1,6 @@
 // @ts-check
+const fs = require("fs");
+const path = require("path");
 const { test, expect } = require("@playwright/test");
 const {
 	injectAndWaitForButtons,
@@ -696,6 +698,19 @@ test.describe("List pages", () => {
 			for (const url of urls) expect(url).toMatch(/^https:\/\/x\.debridmediamanager\.com\/tt\d+$/);
 		});
 	}
+
+	test("AniList cover cards get no button inside them", async ({ page }) => {
+		await page.route("https://anilist.co/home", (route) =>
+			route.fulfill({
+				contentType: "text/html",
+				body: fs.readFileSync(path.join(__dirname, "fixtures", "anilist-airing.html")),
+			})
+		);
+		await page.goto("https://anilist.co/home");
+		await injectScript(page);
+		await page.waitForTimeout(500);
+		expect(await page.locator(".media-preview-card button").count()).toBe(0);
+	});
 
 	test("LimeTorrents torrent-cache links", async ({ page }) => {
 		await page.goto("https://www.limetorrents.lol/search/all/dune/", {
