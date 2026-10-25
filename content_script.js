@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.8
+// @version      1.8.9
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -142,7 +142,11 @@
 
 			item.setAttribute("data-dmm-btn-added", "true");
 
-			const targetElement = item.querySelector("h3.ipc-title__text") || link;
+			// The title, never the poster overlay link that comes first.
+			const targetElement =
+				item.querySelector(".ipc-title") ||
+				[...item.querySelectorAll('a[href*="/title/"]')].find((a) => a.textContent.trim()) ||
+				link;
 			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
 			addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 		});
@@ -669,7 +673,22 @@
 				};
 			button.dataset.dmmGrid = match[0];
 			link.insertAdjacentElement("afterend", button);
+			// A title in a fixed one-line box (carousel captions, poster tiles)
+			// has no room: drop the button rather than cut it off or the title.
+			if (isClipped(button)) button.remove();
 		});
+	}
+
+	function isClipped(element) {
+		const box = element.getBoundingClientRect();
+		let parent = element.parentElement;
+		for (let depth = 0; depth < 3 && parent; depth++, parent = parent.parentElement) {
+			const style = getComputedStyle(parent);
+			const edge = parent.getBoundingClientRect();
+			if (style.overflowX !== "visible" && box.right > edge.right + 1) return true;
+			if (style.overflowY !== "visible" && box.bottom > edge.bottom + 1) return true;
+		}
+		return false;
 	}
 
 	// observer utility function

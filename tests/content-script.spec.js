@@ -712,6 +712,50 @@ test.describe("List pages", () => {
 		expect(await page.locator(".media-preview-card button").count()).toBe(0);
 	});
 
+	// Real cards captured with their computed layout inlined (tests/fixtures).
+	const serve = (page, url, fixture) =>
+		page.route(url, (route) =>
+			route.fulfill({
+				contentType: "text/html",
+				body: fs.readFileSync(path.join(__dirname, "fixtures", fixture)),
+			})
+		);
+
+	test("IMDb filmography buttons sit beside the title, not on the poster", async ({ page }) => {
+		await serve(page, "https://www.imdb.com/name/nm3154303/", "imdb-name-credits.html");
+		await page.goto("https://www.imdb.com/name/nm3154303/");
+		await injectScript(page);
+		const placed = await page.$$eval(".ipc-metadata-list-summary-item button", (buttons) =>
+			buttons.filter((b) => b.textContent.startsWith("DMM")).map((b) => !b.closest(".ipc-lockup-overlay"))
+		);
+		expect(placed).toEqual([true, true]);
+	});
+
+	for (const [name, url, fixture] of [
+		["MyAnimeList episode carousel", "https://myanimelist.net/", "mal-home-episodes.html"],
+		["MyAnimeList studio tiles", "https://myanimelist.net/anime/producer/11/Madhouse", "mal-studio-tiles.html"],
+	]) {
+		test(`${name} gets no cut-off buttons`, async ({ page }) => {
+			await serve(page, url, fixture);
+			await page.goto(url);
+			await injectScript(page);
+			await page.waitForTimeout(500);
+			const clipped = await page.$$eval("button[data-dmm-grid]", (buttons) =>
+				buttons.filter((b) => {
+					const box = b.getBoundingClientRect();
+					for (let p = b.parentElement, i = 0; p && i < 3; p = p.parentElement, i++) {
+						const style = getComputedStyle(p);
+						const edge = p.getBoundingClientRect();
+						if (style.overflowX !== "visible" && box.right > edge.right + 1) return true;
+						if (style.overflowY !== "visible" && box.bottom > edge.bottom + 1) return true;
+					}
+					return false;
+				}).length
+			);
+			expect(clipped).toBe(0);
+		});
+	}
+
 	test("LimeTorrents torrent-cache links", async ({ page }) => {
 		await page.goto("https://www.limetorrents.lol/search/all/dune/", {
 			waitUntil: "domcontentloaded",
