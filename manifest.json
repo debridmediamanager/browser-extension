@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Debrid Media Manager",
-    "version": "1.8.9",
+    "version": "1.8.10",
     "description": "Adds Debrid Media Manager buttons to movie, TV and anime sites and next to torrent links",
     "content_scripts": [
         {

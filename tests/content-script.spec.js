@@ -721,6 +721,22 @@ test.describe("List pages", () => {
 			})
 		);
 
+	// A French browser locale moves IMDb under /fr/ (card #449).
+	for (const [url, fixture] of [
+		["https://www.imdb.com/fr/title/tt0111161/", "imdb-fr-title.html"],
+		["https://m.imdb.com/fr/title/tt0111161/", "imdb-fr-title.html"],
+		["https://www.imdb.com/es-es/title/tt0111161/", "imdb-fr-title.html"],
+		["https://www.imdb.com/fr/chart/top/", "imdb-fr-chart.html"],
+	]) {
+		test(`localized IMDb ${url} gets its DMM button`, async ({ page }) => {
+			await serve(page, url, fixture);
+			await page.goto(url);
+			await injectScript(page);
+			await page.waitForTimeout(500);
+			expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0111161"]);
+		});
+	}
+
 	test("IMDb filmography buttons sit beside the title, not on the poster", async ({ page }) => {
 		await serve(page, "https://www.imdb.com/name/nm3154303/", "imdb-name-credits.html");
 		await page.goto("https://www.imdb.com/name/nm3154303/");

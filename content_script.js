@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.9
+// @version      1.8.10
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -126,7 +126,7 @@
 			?.textContent?.match(/S(\d+)/)?.[1];
 		const searchUrl = seriesId
 			? dmmUrl(seriesId, season)
-			: `${X_DMM_HOST}/${window.location.pathname.replaceAll("/", "").substring(5)}`;
+			: `${X_DMM_HOST}/${location.pathname.match(/tt\d+/)?.[0]}`;
 		addButtonToElement(targetElement, SEARCH_BTN_LABEL, searchUrl);
 	}
 
@@ -162,7 +162,7 @@
 		items.forEach((item) => {
 			item.setAttribute("data-dmm-btn-added", "true");
 
-			let link = item.querySelector('a[href^="/title/"]').href;
+			let link = item.querySelector('a[href*="/title/"]').href;
 			let imdbId = link.match(/tt\d+/)?.[0];
 			if (!imdbId) return;
 			const searchUrl = `${X_DMM_HOST}/${imdbId}`;
@@ -455,7 +455,7 @@
 
 	// Season pages on sites handled above, sent through addLookupButton.
 	const IMDB_EPISODES = {
-		path: /^\/title\/(tt\d+)\/episodes/,
+		path: /^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/title\/(tt\d+)\/episodes/,
 		title: "h1.ipc-title__text",
 		url: ([, id]) => imdbUrl(id, new URLSearchParams(location.search).get("season")),
 	};
@@ -744,34 +744,15 @@
 	const hostname = window.location.hostname;
 
 	///// IMDB /////
-	if (hostname === "www.imdb.com") {
-		const isIMDBSingleTitlePage = /^\/title\//.test(location.pathname);
+	if (hostname === "www.imdb.com" || hostname === "m.imdb.com") {
+		// Localized IMDb serves the same pages under /fr/, /es-es/ and so on.
+		const path = location.pathname.replace(/^\/[a-z]{2}(?:-[a-z]{2})?(?=\/)/, "");
+		const isIMDBSingleTitlePage = /^\/title\//.test(path);
 		const isIMDBListPage =
-			/^\/search\//.test(location.pathname) ||
-			/^\/list\/ls/.test(location.pathname) ||
-			/^\/(name\/nm\d+|calendar)\/?$/.test(location.pathname);
-		const isIMDBChartPage = /^\/chart\//.test(location.pathname);
-
-		if (IMDB_EPISODES.path.test(location.pathname)) {
-			addLookupButton(IMDB_EPISODES);
-			changeObserver("body", () => addLookupButton(IMDB_EPISODES));
-		} else if (isIMDBSingleTitlePage) {
-			addButtonsToIMDBSingleTitle();
-			changeObserver("section.ipc-page-background", addButtonsToIMDBSingleTitle);
-		} else if (isIMDBListPage) {
-			addButtonsToIMDBList();
-		} else if (isIMDBChartPage) {
-			addButtonsToIMDBChart();
-		}
-
-		///// IMDB MOBILE /////
-	} else if (hostname === "m.imdb.com") {
-		const isIMDBSingleTitlePage = /^\/title\//.test(location.pathname);
-		const isIMDBListPage =
-			/^\/search\//.test(location.pathname) ||
-			/^\/list\/ls/.test(location.pathname) ||
-			/^\/(name\/nm\d+|calendar)\/?$/.test(location.pathname);
-		const isIMDBChartPage = /^\/chart\//.test(location.pathname);
+			/^\/search\//.test(path) ||
+			/^\/list\/ls/.test(path) ||
+			/^\/(name\/nm\d+|calendar)\/?$/.test(path);
+		const isIMDBChartPage = /^\/chart\//.test(path);
 
 		if (IMDB_EPISODES.path.test(location.pathname)) {
 			addLookupButton(IMDB_EPISODES);
