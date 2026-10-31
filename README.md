@@ -1,4 +1,8 @@
-# browser-extension
+# Debrid Media Manager browser extension
+
+Adds a button to IMDb, Trakt and other movie and TV sites that opens the title on [Debrid Media Manager](https://debridmediamanager.com/).
+
+Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/Debrid%20Media%20Manager/oeojlegjfhgefhnbjdnaebgdfkbipghm) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/debrid-media-manager/). Safari uses the [userscript](https://greasyfork.org/en/scripts/463268-debrid-media-manager) through the Userscripts app. [DMM buttons in Safari](https://notes.debridmediamanager.com/dmm/safari/) walks through it.
 
 ## Pack it up for use
 
@@ -79,3 +83,7 @@ URLs for testing:
 - https://anilist.co/search/anime/trending
 - https://web.stremio.com/#/detail/series/tt0944947
 - https://www.limetorrents.lol/search/all/dune/ -- torrent-cache links
+
+---
+
+**More from DMM:** [Debrid Media Manager](https://debridmediamanager.com/) · [zurg](https://zurg.debridmediamanager.com/) · [rex](https://rex.debridmediamanager.com/) · [Docs](https://notes.debridmediamanager.com/) · [Sponsor](https://gatekeeper.debridmediamanager.com/) · [Discord](https://discord.com/invite/7u4YjMThXP) · [Reddit](https://www.reddit.com/r/debridmediamanager/)
