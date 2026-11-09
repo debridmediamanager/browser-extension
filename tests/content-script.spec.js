@@ -871,6 +871,29 @@ test.describe("Radarr and Sonarr", () => {
 		);
 	});
 
+	test("Sonarr poster grid shows its button only while a poster is hovered", async ({ page }) => {
+		await serveArr(
+			page, "Sonarr", "http://arr.local/radarr/",
+			'<div style="width:150px;height:220px"><a id="p" href="/radarr/series/24" style="display:block;width:150px;height:220px"><img alt="" width="150" height="220"></a></div>',
+			() => [{ titleSlug: "24", imdbId: "tt0285331" }]
+		);
+		await page.route("https://x.debridmediamanager.com/**", (route) => route.fulfill({ body: "dmm" }));
+		await injectScript(page);
+		await page.waitForTimeout(500);
+		const button = page.locator("#p button");
+		await expect(button).toBeHidden();
+		await page.locator("#p").hover({ position: { x: 75, y: 110 } });
+		await expect(button).toBeVisible();
+		await page.evaluate(() => {
+			window.open = () => ({ location: { set href(url) { window.dmmOpened = url; } } });
+		});
+		await button.click();
+		await expect.poll(() => page.evaluate(() => window.dmmOpened)).toBe("https://x.debridmediamanager.com/tt0285331");
+		expect(page.url()).toBe("http://arr.local/radarr/");
+		await page.mouse.move(600, 600);
+		await expect(button).toBeHidden();
+	});
+
 	test("a page that is not Radarr or Sonarr is left alone", async ({ page }) => {
 		await page.route("http://other.local/", (route) =>
 			route.fulfill({

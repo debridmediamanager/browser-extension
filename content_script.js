@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.14
+// @version      1.8.15
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, self-hosted Radarr and Sonarr, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -653,7 +653,11 @@
 					),
 				url: ([, slug]) => lookup(slug).then((url) => url ?? imdbUrl(pageImdbId())),
 			},
-			grid: { link: new RegExp(`/${app.kind}/([^/]+)$`), url: ([, slug]) => lookup(slug) },
+			grid: {
+				link: new RegExp(`/${app.kind}/([^/]+)$`),
+				hover: true,
+				url: ([, slug]) => lookup(slug),
+			},
 		};
 	}
 
@@ -790,32 +794,69 @@
 		},
 	];
 
+	// Open DMM from a grid button. The tab opens inside the click so it is not
+	// blocked as a popup; the lookup then sends it on.
+	function openGridTab(grid, match) {
+		const tab = window.open("", "_blank");
+		if (!tab) return;
+		tab.opener = null;
+		Promise.resolve(grid.url(match))
+			.then((url) => (url ? (tab.location.href = url) : tab.close()))
+			.catch(() => tab.close());
+	}
+
+	// A poster has no room for a button of its own, so the button appears over
+	// its corner while the pointer is on it.
+	function addPosterHoverButton(link, grid, match) {
+		const button = createButton(SEARCH_BTN_LABEL, null);
+		Object.assign(button.style, {
+			position: "absolute",
+			top: "6px",
+			left: "6px",
+			zIndex: "10",
+			display: "none",
+			marginLeft: "0",
+		});
+		button.dataset.dmmGrid = match[0];
+		// The poster is a link: keep the click from also opening the title.
+		button.onclick = (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			openGridTab(grid, match);
+		};
+		if (getComputedStyle(link).position === "static") link.style.position = "relative";
+		link.addEventListener("mouseenter", () => (button.style.display = ""));
+		link.addEventListener("mouseleave", () => (button.style.display = "none"));
+		link.appendChild(button);
+	}
+
 	function addGridButtons(grid, titlePage) {
 		if (titlePage?.test(location.pathname)) return;
 		document.querySelectorAll("a[href]:not([data-dmm-grid])").forEach((link) => {
-			if (link.host !== location.host || link.querySelector("img")) return;
-			// Covers drawn as a (lazy) background image, like AniList's airing cards.
-			if (link.style.backgroundImage || link.hasAttribute("lazy")) return;
+			if (link.host !== location.host) return;
+			const poster =
+				link.querySelector("img") || link.querySelector('[style*="background-image"]');
+			if (poster && !grid.hover) return;
+			if (!poster) {
+				// Covers drawn as a (lazy) background image, like AniList's airing cards.
+				if (link.style.backgroundImage || link.hasAttribute("lazy")) return;
+				if (!link.textContent.trim()) return;
+			}
 			// Hidden links (collapsed sections) wait until they are shown.
-			if (!link.textContent.trim() || !link.getClientRects().length) return;
+			if (!link.getClientRects().length) return;
 			const match = link.pathname.match(grid.link);
 			if (!match) return;
 			link.dataset.dmmGrid = "true";
 			// Cards often link their title twice; one button per title.
 			if (document.querySelector(`button[data-dmm-grid="${CSS.escape(match[0])}"]`)) return;
+			if (poster) return addPosterHoverButton(link, grid, match);
 			const button = grid.direct
 				? createButton(SEARCH_BTN_LABEL, grid.url(match))
 				: createButton(SEARCH_BTN_LABEL, null);
 			if (!grid.direct)
 				button.onclick = (event) => {
 					event.preventDefault();
-					// Open the tab inside the click so it is not blocked as a popup.
-					const tab = window.open("", "_blank");
-					if (!tab) return;
-					tab.opener = null;
-					Promise.resolve(grid.url(match))
-						.then((url) => (url ? (tab.location.href = url) : tab.close()))
-						.catch(() => tab.close());
+					openGridTab(grid, match);
 				};
 			button.dataset.dmmGrid = match[0];
 			link.insertAdjacentElement("afterend", button);
