@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.11
+// @version      1.8.12
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, self-hosted Radarr and Sonarr, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -520,9 +520,12 @@
 		);
 	}
 
-	// Radarr and Sonarr are self-hosted, so no hostname names them. An instance
-	// is the page that serves initialize.js and calls itself Radarr or Sonarr;
-	// that script also holds the API key and API root the app uses itself.
+	/**
+	 * Recognise a Radarr or Sonarr page. Both are self-hosted, so no hostname
+	 * names them: an instance serves initialize.js and calls itself Radarr or
+	 * Sonarr. That script also holds the API key and root the app uses itself.
+	 * @returns {{kind: "movie"|"series", init: string}|null}
+	 */
 	function arrApp() {
 		const init = document.querySelector('script[src*="initialize.js"]');
 		if (!init) return null;
@@ -533,22 +536,41 @@
 	}
 
 	let arrConfig;
+	/**
+	 * GET a path of the app's API with the key its own page uses. The key is
+	 * read once; a failed read is forgotten so the next call retries it.
+	 * @param {{init: string}} app
+	 * @param {string} path API path such as "/series"
+	 * @returns {Promise<any>} the parsed JSON, or null for a non-OK answer
+	 */
 	function arrApi(app, path) {
 		arrConfig ??= fetch(app.init)
-			.then((res) => (res.ok ? res.text() : ""))
+			.then((res) => {
+				if (!res.ok) throw new Error(`initialize.js: ${res.status}`);
+				return res.text();
+			})
 			.then((js) => ({
 				apiKey: js.match(/apiKey:\s*['"]([^'"]*)['"]/)?.[1],
 				apiRoot:
 					js.match(/apiRoot:\s*['"]([^'"]*)['"]/)?.[1] ??
 					new URL(app.init).pathname.replace(/\/initialize\.js$/, "") + "/api/v3",
-			}));
+			}))
+			.catch((error) => {
+				arrConfig = undefined;
+				throw error;
+			});
 		return arrConfig.then(({ apiKey, apiRoot }) =>
 			getJson(apiRoot + path, apiKey ? { headers: { "X-Api-Key": apiKey } } : undefined)
 		);
 	}
 
-	// Radarr's slug is the TMDb id; Sonarr's is the show's name, found in the
-	// library list.
+	/**
+	 * The IMDb id of a library title. Radarr's slug is the TMDb id; Sonarr's is
+	 * the show's name, found in the library list.
+	 * @param {{kind: string, init: string}} app
+	 * @param {string} slug
+	 * @returns {Promise<string|null|undefined>}
+	 */
 	function arrImdbId(app, slug) {
 		if (app.kind === "movie") {
 			const tmdb = slug.match(/(\d+)$/)?.[1];
@@ -559,8 +581,12 @@
 		return arrApi(app, "/series").then((list) => list?.find((s) => s.titleSlug === slug)?.imdbId);
 	}
 
-	// The title page joins the IMDb link the app shows; library lists get a
-	// button beside each title, looked up on click like the other grids.
+	/**
+	 * The lookup and grid entries for a Radarr or Sonarr page, or {} elsewhere.
+	 * The title page joins the IMDb link the app shows; library lists get a
+	 * button beside each title, looked up on click like the other grids.
+	 * @returns {{site?: object, grid?: object}}
+	 */
 	function arrSites() {
 		const app = arrApp();
 		if (!app) return {};

@@ -1,5 +1,5 @@
 {
-  "version": "1.8.11",
+  "version": "1.8.12",
   "scripts": {
     "prepare": "pre-commit install || echo 'pre-commit not found — install it with: uv tool install pre-commit'",
     "screenshots": "node scripts/screenshots.js"
