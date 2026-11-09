@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.15
+// @version      1.8.16
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, self-hosted Radarr and Sonarr, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -584,7 +584,7 @@
 	/**
 	 * A library title as the app's API describes it. Radarr's slug is the TMDb
 	 * id; Sonarr's is the show's name, found in the library list.
-	 * @param {{kind: string, init: string}} app
+	 * @param {{kind: string, base: string}} app
 	 * @param {string} slug
 	 * @returns {Promise<{imdbId?: string, title?: string}|null|undefined>}
 	 */
@@ -767,7 +767,8 @@
 				})
 				.catch(() => {});
 		};
-		if (found instanceof Promise) found.then((el) => here() === key && place(el)).catch(() => {});
+		// Not instanceof Promise: Firefox content scripts get fetch() promises from the page's realm.
+		if (typeof found?.then === "function") found.then((el) => here() === key && place(el)).catch(() => {});
 		else place(found);
 	}
 

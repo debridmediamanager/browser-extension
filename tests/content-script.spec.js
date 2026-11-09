@@ -830,6 +830,28 @@ test.describe("Radarr and Sonarr", () => {
 		expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0133093"]);
 	});
 
+	// A Firefox content script gets fetch() promises from the page's realm, so they
+	// are not instanceof its own Promise. An iframe's Promise stands in for that.
+	test("Radarr movie page gets its button when fetch answers with another realm's promise", async ({ page }) => {
+		await serveArr(
+			page, "Radarr", "http://arr.local/radarr/movie/603",
+			'<div id="links"><a href="https://imdb.com/title/tt0133093/">IMDb</a></div>',
+			() => [{ imdbId: "tt0133093" }]
+		);
+		const errors = [];
+		page.on("pageerror", (error) => errors.push(String(error)));
+		await page.evaluate(() => {
+			const realm = document.body.appendChild(document.createElement("iframe")).contentWindow;
+			const fetch = window.fetch.bind(window);
+			window.fetch = (...args) => new realm.Promise((resolve, reject) => fetch(...args).then(resolve, reject));
+		});
+		await injectScript(page);
+		await page.waitForTimeout(500);
+		expect(errors).toEqual([]);
+		expect(await page.locator("#links button").count()).toBe(1);
+		expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0133093"]);
+	});
+
 	test("Sonarr series page puts its button after the run years when no IMDb link is shown", async ({ page }) => {
 		await serveArr(
 			page, "Sonarr", "http://arr.local/radarr/series/24",
