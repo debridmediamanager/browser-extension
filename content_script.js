@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.12
+// @version      1.8.13
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, self-hosted Radarr and Sonarr, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -565,20 +565,40 @@
 	}
 
 	/**
-	 * The IMDb id of a library title. Radarr's slug is the TMDb id; Sonarr's is
-	 * the show's name, found in the library list.
+	 * A library title as the app's API describes it. Radarr's slug is the TMDb
+	 * id; Sonarr's is the show's name, found in the library list.
 	 * @param {{kind: string, init: string}} app
 	 * @param {string} slug
-	 * @returns {Promise<string|null|undefined>}
+	 * @returns {Promise<{imdbId?: string, title?: string}|null|undefined>}
 	 */
-	function arrImdbId(app, slug) {
+	function arrItem(app, slug) {
 		if (app.kind === "movie") {
 			const tmdb = slug.match(/(\d+)$/)?.[1];
 			return tmdb
-				? arrApi(app, `/movie?tmdbId=${tmdb}`).then((movies) => movies?.[0]?.imdbId)
+				? arrApi(app, `/movie?tmdbId=${tmdb}`).then((movies) => movies?.[0])
 				: Promise.resolve(null);
 		}
-		return arrApi(app, "/series").then((list) => list?.find((s) => s.titleSlug === slug)?.imdbId);
+		return arrApi(app, "/series").then((list) => list?.find((s) => s.titleSlug === slug));
+	}
+
+	/**
+	 * The heading that shows a title: the app's class names are hashed and its
+	 * IMDb links sit behind a "Links" button, so find the visible element whose
+	 * own text is the title the API gave.
+	 * @param {string|undefined} title
+	 * @returns {Element|undefined}
+	 */
+	function arrHeading(title) {
+		if (!title) return undefined;
+		const ownText = (el) =>
+			Array.from(el.childNodes)
+				.filter((node) => node.nodeType === Node.TEXT_NODE)
+				.map((node) => node.textContent)
+				.join("")
+				.trim();
+		return Array.from(document.querySelectorAll("div, span, h1, h2")).find(
+			(el) => el.getClientRects().length && ownText(el) === title
+		);
 	}
 
 	/**
@@ -590,14 +610,18 @@
 	function arrSites() {
 		const app = arrApp();
 		if (!app) return {};
-		const lookup = (slug) =>
-			arrImdbId(app, decodeURIComponent(slug))
-				.catch(() => null)
-				.then((id) => imdbUrl(id));
+		const item = (slug) => arrItem(app, decodeURIComponent(slug)).catch(() => null);
+		const lookup = (slug) => item(slug).then((found) => imdbUrl(found?.imdbId));
 		return {
 			site: {
 				path: new RegExp(`/${app.kind}/([^/]+)/?$`),
-				title: '*:has(> a[href*="imdb.com/title/tt"])',
+				// The app's own IMDb link, when its Links box is open, is the fallback.
+				title: ([, slug]) =>
+					item(slug).then(
+						(found) =>
+							arrHeading(found?.title) ??
+							document.querySelector('*:has(> a[href*="imdb.com/title/tt"])')
+					),
 				url: ([, slug]) => lookup(slug).then((url) => url ?? imdbUrl(pageImdbId())),
 			},
 			grid: { link: new RegExp(`/${app.kind}/([^/]+)$`), url: ([, slug]) => lookup(slug) },
@@ -683,26 +707,35 @@
 			parent.removeAttribute("data-dmm-btn-added");
 			button.remove();
 		});
-		const targetElement = document.querySelector(site.title);
-		if (!match || !targetElement || targetElement.dataset.dmmKey === key) return;
+		// A site can find its title element with a function, which may answer later.
+		const found = !match
+			? null
+			: typeof site.title === "function"
+				? site.title(match)
+				: document.querySelector(site.title);
+		const place = (targetElement) => {
+			if (!match || !targetElement || targetElement.dataset.dmmKey === key) return;
 
-		const result = site.url(match);
-		if (!result) return;
-		targetElement.dataset.dmmKey = key;
-		Promise.resolve(result)
-			.then((url) => {
-				if (
-					!url ||
-					targetElement.dataset.dmmKey !== key ||
-					here() !== key
-				)
-					return;
-				targetElement.setAttribute("data-dmm-btn-added", "true");
-				const button = createButton(SEARCH_BTN_LABEL, url);
-				button.dataset.dmmLookup = key;
-				targetElement.appendChild(button);
-			})
-			.catch(() => {});
+			const result = site.url(match);
+			if (!result) return;
+			targetElement.dataset.dmmKey = key;
+			Promise.resolve(result)
+				.then((url) => {
+					if (
+						!url ||
+						targetElement.dataset.dmmKey !== key ||
+						here() !== key
+					)
+						return;
+					targetElement.setAttribute("data-dmm-btn-added", "true");
+					const button = createButton(SEARCH_BTN_LABEL, url);
+					button.dataset.dmmLookup = key;
+					targetElement.appendChild(button);
+				})
+				.catch(() => {});
+		};
+		if (found instanceof Promise) found.then((el) => here() === key && place(el)).catch(() => {});
+		else place(found);
 	}
 
 	// List pages: a button beside each title link. MyAnimeList links name the
