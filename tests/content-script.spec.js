@@ -893,6 +893,30 @@ test.describe("Radarr and Sonarr", () => {
 		);
 	});
 
+	// A Firefox content script may not set opener on the tab it opens: it throws
+	// "Permission denied to set property "opener" on cross-origin object".
+	test("Sonarr library button still sends its tab on when the tab's opener cannot be set", async ({ page }) => {
+		await serveArr(
+			page, "Sonarr", "http://arr.local/radarr/",
+			'<table><tr><td><a href="/radarr/series/breaking-bad">Breaking Bad</a></td></tr></table>',
+			() => [{ titleSlug: "breaking-bad", imdbId: "tt0903747" }]
+		);
+		await injectScript(page);
+		await page.waitForTimeout(500);
+		await page.evaluate(() => {
+			window.open = () => ({
+				set opener(_) {
+					throw new DOMException('Permission denied to set property "opener" on cross-origin object', "SecurityError");
+				},
+				location: { set href(url) { window.dmmOpened = url; } },
+			});
+		});
+		await page.locator("td button").click();
+		await expect.poll(() => page.evaluate(() => window.dmmOpened)).toBe(
+			"https://x.debridmediamanager.com/tt0903747"
+		);
+	});
+
 	test("Sonarr poster grid shows its button only while a poster is hovered", async ({ page }) => {
 		await serveArr(
 			page, "Sonarr", "http://arr.local/radarr/",

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.16
+// @version      1.8.17
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, self-hosted Radarr and Sonarr, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -800,7 +800,11 @@
 	function openGridTab(grid, match) {
 		const tab = window.open("", "_blank");
 		if (!tab) return;
-		tab.opener = null;
+		try {
+			tab.opener = null;
+		} catch {
+			// Firefox content scripts may not set opener on the tab; it still navigates.
+		}
 		Promise.resolve(grid.url(match))
 			.then((url) => (url ? (tab.location.href = url) : tab.close()))
 			.catch(() => tab.close());
