@@ -831,6 +831,18 @@ test.describe("Radarr and Sonarr", () => {
 		expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0133093"]);
 	});
 
+	test("Sonarr series page puts its button on the heading when no IMDb link is shown", async ({ page }) => {
+		await serveArr(
+			page, "Sonarr", "http://arr.local/radarr/series/24",
+			'<div id="hero"><div id="name">24<button>copy</button></div><div>45 Minutes</div><span>Links</span></div>',
+			() => [{ titleSlug: "24", title: "24", imdbId: "tt0285331" }]
+		);
+		await injectScript(page);
+		await page.waitForTimeout(500);
+		expect(await page.locator("#name > button").count()).toBe(2);
+		expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0285331"]);
+	});
+
 	test("Sonarr library list looks the show up by slug on click", async ({ page }) => {
 		await serveArr(
 			page, "Sonarr", "http://arr.local/radarr/",
