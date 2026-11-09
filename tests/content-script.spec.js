@@ -795,3 +795,80 @@ test.describe("List pages", () => {
 			expect(url).toMatch(/^https:\/\/debridmediamanager\.com\/library\?addMagnet=[0-9a-f]{40}$/);
 	});
 });
+
+// ---------------------------------------------------------------------------
+// Radarr / Sonarr (self-hosted: found by page content, not hostname)
+// ---------------------------------------------------------------------------
+test.describe("Radarr and Sonarr", () => {
+	const INIT = "window.Radarr = { apiRoot: '/radarr/api/v3', apiKey: 'abc123', urlBase: '/radarr' };";
+	const serveArr = async (page, app, url, body, api) => {
+		await page.route("http://arr.local/**", (route) => {
+			const u = new URL(route.request().url());
+			if (u.pathname.endsWith("/initialize.js"))
+				return route.fulfill({ contentType: "text/javascript", body: INIT });
+			if (u.pathname.includes("/api/v3/")) {
+				if (route.request().headers()["x-api-key"] !== "abc123") return route.fulfill({ status: 401, body: "" });
+				return route.fulfill({ contentType: "application/json", body: JSON.stringify(api(u)) });
+			}
+			return route.fulfill({
+				contentType: "text/html",
+				body: `<html><head><title>${app}</title><meta name="description" content="${app}">
+					<script src="${u.origin}/radarr/initialize.js?t=1"></script></head><body>${body}</body></html>`,
+			});
+		});
+		await page.goto(url);
+	};
+
+	test("Radarr movie page gets a button beside its IMDb link", async ({ page }) => {
+		await serveArr(
+			page, "Radarr", "http://arr.local/radarr/movie/603",
+			'<div id="links"><a href="https://imdb.com/title/tt0133093/">IMDb</a></div>',
+			() => [{ imdbId: "tt0133093" }]
+		);
+		await injectScript(page);
+		await page.waitForTimeout(500);
+		expect(await page.locator("#links button").count()).toBe(1);
+		expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0133093"]);
+	});
+
+	test("Sonarr library list looks the show up by slug on click", async ({ page }) => {
+		await serveArr(
+			page, "Sonarr", "http://arr.local/radarr/",
+			'<table><tr><td><a href="/radarr/series/breaking-bad">Breaking Bad</a></td></tr>' +
+				'<tr><td><a href="/radarr/series/better-call-saul">Better Call Saul</a></td></tr></table>',
+			() => [
+				{ titleSlug: "better-call-saul", imdbId: "tt3032476" },
+				{ titleSlug: "breaking-bad", imdbId: "tt0903747" },
+			]
+		);
+		await page.route("https://x.debridmediamanager.com/**", (route) =>
+			route.fulfill({ contentType: "text/html", body: "dmm" })
+		);
+		await injectScript(page);
+		await page.waitForTimeout(500);
+		expect(await page.locator("td button").count()).toBe(2);
+		// Stand in for the tab the click opens, to read where it is sent.
+		await page.evaluate(() => {
+			window.open = () => {
+				const tab = { location: { set href(url) { window.dmmOpened = url; } } };
+				return tab;
+			};
+		});
+		await page.locator("td button").first().click();
+		await expect.poll(() => page.evaluate(() => window.dmmOpened)).toBe(
+			"https://x.debridmediamanager.com/tt0903747"
+		);
+	});
+
+	test("a page that is not Radarr or Sonarr is left alone", async ({ page }) => {
+		await page.route("http://other.local/", (route) =>
+			route.fulfill({
+				contentType: "text/html",
+				body: '<html><head><title>Notes</title></head><body><a href="/movie/603">The Matrix</a></body></html>',
+			})
+		);
+		await page.goto("http://other.local/");
+		await injectScript(page);
+		expect(await page.locator("button").count()).toBe(0);
+	});
+});

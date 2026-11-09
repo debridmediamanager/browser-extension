@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.10
-// @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, and Bittorrent sites with magnet links
+// @version      1.8.11
+// @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, self-hosted Radarr and Sonarr, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
 // @match        *://*/*
@@ -520,6 +520,64 @@
 		);
 	}
 
+	// Radarr and Sonarr are self-hosted, so no hostname names them. An instance
+	// is the page that serves initialize.js and calls itself Radarr or Sonarr;
+	// that script also holds the API key and API root the app uses itself.
+	function arrApp() {
+		const init = document.querySelector('script[src*="initialize.js"]');
+		if (!init) return null;
+		const name = [document.querySelector('meta[name="description"]')?.content, document.title]
+			.join(" ")
+			.match(/\b(Radarr|Sonarr)\b/)?.[1];
+		return name ? { kind: name === "Radarr" ? "movie" : "series", init: init.src } : null;
+	}
+
+	let arrConfig;
+	function arrApi(app, path) {
+		arrConfig ??= fetch(app.init)
+			.then((res) => (res.ok ? res.text() : ""))
+			.then((js) => ({
+				apiKey: js.match(/apiKey:\s*['"]([^'"]*)['"]/)?.[1],
+				apiRoot:
+					js.match(/apiRoot:\s*['"]([^'"]*)['"]/)?.[1] ??
+					new URL(app.init).pathname.replace(/\/initialize\.js$/, "") + "/api/v3",
+			}));
+		return arrConfig.then(({ apiKey, apiRoot }) =>
+			getJson(apiRoot + path, apiKey ? { headers: { "X-Api-Key": apiKey } } : undefined)
+		);
+	}
+
+	// Radarr's slug is the TMDb id; Sonarr's is the show's name, found in the
+	// library list.
+	function arrImdbId(app, slug) {
+		if (app.kind === "movie") {
+			const tmdb = slug.match(/(\d+)$/)?.[1];
+			return tmdb
+				? arrApi(app, `/movie?tmdbId=${tmdb}`).then((movies) => movies?.[0]?.imdbId)
+				: Promise.resolve(null);
+		}
+		return arrApi(app, "/series").then((list) => list?.find((s) => s.titleSlug === slug)?.imdbId);
+	}
+
+	// The title page joins the IMDb link the app shows; library lists get a
+	// button beside each title, looked up on click like the other grids.
+	function arrSites() {
+		const app = arrApp();
+		if (!app) return {};
+		const lookup = (slug) =>
+			arrImdbId(app, decodeURIComponent(slug))
+				.catch(() => null)
+				.then((id) => imdbUrl(id));
+		return {
+			site: {
+				path: new RegExp(`/${app.kind}/([^/]+)/?$`),
+				title: '*:has(> a[href*="imdb.com/title/tt"])',
+				url: ([, slug]) => lookup(slug).then((url) => url ?? imdbUrl(pageImdbId())),
+			},
+			grid: { link: new RegExp(`/${app.kind}/([^/]+)$`), url: ([, slug]) => lookup(slug) },
+		};
+	}
+
 	const LOOKUP_SITES = [
 		{
 			host: /^www\.themoviedb\.org$/,
@@ -840,8 +898,9 @@
 			addButtonsToMetacriticSingleTitle();
 		}
 	} else {
-		const site = LOOKUP_SITES.find((s) => s.host.test(hostname));
-		const grid = GRID_SITES.find((s) => s.host.test(hostname));
+		const arr = arrSites();
+		const site = LOOKUP_SITES.find((s) => s.host.test(hostname)) ?? arr.site;
+		const grid = GRID_SITES.find((s) => s.host.test(hostname)) ?? arr.grid;
 		const run = () => {
 			if (site) addLookupButton(site);
 			if (grid) addGridButtons(grid, site?.path);

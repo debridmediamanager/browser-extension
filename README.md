@@ -1,6 +1,6 @@
 # Debrid Media Manager browser extension
 
-Adds a button to IMDb, Trakt and other movie and TV sites that opens the title on [Debrid Media Manager](https://debridmediamanager.com/).
+Adds a button to IMDb, Trakt and other movie and TV sites that opens the title on [Debrid Media Manager](https://debridmediamanager.com/). It also works on your own Radarr and Sonarr: title pages and library lists get a button, found by the page rather than its address.
 
 Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/Debrid%20Media%20Manager/oeojlegjfhgefhnbjdnaebgdfkbipghm) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/debrid-media-manager/). Safari uses the [userscript](https://greasyfork.org/en/scripts/463268-debrid-media-manager) through the Userscripts app. [DMM buttons in Safari](https://notes.debridmediamanager.com/dmm/safari/) walks through it.
 
