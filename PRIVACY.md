@@ -1,6 +1,6 @@
 # Privacy Policy — Debrid Media Manager Browser Extension
 
-**Last updated:** 2026-10-24
+**Last updated:** 2026-11-09
 
 ## Data Collection
 
@@ -35,6 +35,14 @@ from the page address. It contains no personal data, cookies or history.
 On TMDB, TVmaze and AniList list pages, these lookups happen only when you
 click a DMM button, never for the whole page. Each service handles requests
 under its own privacy policy.
+
+## Your Radarr and Sonarr
+
+On your own Radarr or Sonarr, the extension reads the API key that the app's
+page already loads (from its `initialize.json` or `initialize.js`) and uses it
+to ask that same server for the title's IMDb id. The key and the answer never
+leave the page: nothing is sent anywhere except your own server, and the key is
+not stored.
 
 ## Permissions
 
