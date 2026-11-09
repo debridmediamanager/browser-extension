@@ -800,12 +800,11 @@ test.describe("List pages", () => {
 // Radarr / Sonarr (self-hosted: found by page content, not hostname)
 // ---------------------------------------------------------------------------
 test.describe("Radarr and Sonarr", () => {
-	const INIT = "window.Radarr = { apiRoot: '/radarr/api/v3', apiKey: 'abc123', urlBase: '/radarr' };";
 	const serveArr = async (page, app, url, body, api) => {
 		await page.route("http://arr.local/**", (route) => {
 			const u = new URL(route.request().url());
-			if (u.pathname.endsWith("/initialize.js"))
-				return route.fulfill({ contentType: "text/javascript", body: INIT });
+			if (u.pathname === "/radarr/initialize.json")
+				return route.fulfill({ contentType: "application/json", body: JSON.stringify({ apiRoot: "/radarr/api/v3", apiKey: "abc123" }) });
 			if (u.pathname.includes("/api/v3/")) {
 				if (route.request().headers()["x-api-key"] !== "abc123") return route.fulfill({ status: 401, body: "" });
 				return route.fulfill({ contentType: "application/json", body: JSON.stringify(api(u)) });
@@ -813,7 +812,7 @@ test.describe("Radarr and Sonarr", () => {
 			return route.fulfill({
 				contentType: "text/html",
 				body: `<html><head><title>${app}</title><meta name="description" content="${app}">
-					<script src="${u.origin}/radarr/initialize.js?t=1"></script></head><body>${body}</body></html>`,
+					<script>window.${app} = { urlBase: '/radarr' };</script></head><body>${body}</body></html>`,
 			});
 		});
 		await page.goto(url);
@@ -831,15 +830,15 @@ test.describe("Radarr and Sonarr", () => {
 		expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0133093"]);
 	});
 
-	test("Sonarr series page puts its button on the heading when no IMDb link is shown", async ({ page }) => {
+	test("Sonarr series page puts its button after the run years when no IMDb link is shown", async ({ page }) => {
 		await serveArr(
 			page, "Sonarr", "http://arr.local/radarr/series/24",
-			'<div id="hero"><div id="name">24<button>copy</button></div><div>45 Minutes</div><span>Links</span></div>',
+			'<div id="hero"><div id="name">24<button>copy</button></div><div>45 Minutes</div><span id="years">2001-2014</span><span>Links</span></div>',
 			() => [{ titleSlug: "24", title: "24", imdbId: "tt0285331" }]
 		);
 		await injectScript(page);
 		await page.waitForTimeout(500);
-		expect(await page.locator("#name > button").count()).toBe(2);
+		expect(await page.locator("#years > button").count()).toBe(1);
 		expect(await extractDmmUrls(page)).toEqual(["https://x.debridmediamanager.com/tt0285331"]);
 	});
 
