@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Debrid Media Manager
 // @namespace    https://debridmediamanager.com
-// @version      1.8.13
+// @version      1.8.14
 // @description  Add accessible DMM buttons to IMDB, MDBList, TraktTV, JustWatch, TheTVDB, Criticker, Metacritic, TMDB, Serializd, TVmaze, Simkl, Wikipedia, AniDB, MyAnimeList, AniList, Kitsu, LiveChart, self-hosted Radarr and Sonarr, and Bittorrent sites with magnet links
 // @author       Ben Adrian Sarmiento <me@bensarmiento.com>
 // @license      MIT
@@ -522,39 +522,56 @@
 
 	/**
 	 * Recognise a Radarr or Sonarr page. Both are self-hosted, so no hostname
-	 * names them: an instance serves initialize.js and calls itself Radarr or
-	 * Sonarr. That script also holds the API key and root the app uses itself.
-	 * @returns {{kind: "movie"|"series", init: string}|null}
+	 * names them: their page is the one whose static description is the app's
+	 * name. The inline script that follows holds the URL base the app is served
+	 * under, which the config and API requests need.
+	 * @returns {{kind: "movie"|"series", base: string}|null}
 	 */
 	function arrApp() {
-		const init = document.querySelector('script[src*="initialize.js"]');
-		if (!init) return null;
-		const name = [document.querySelector('meta[name="description"]')?.content, document.title]
-			.join(" ")
-			.match(/\b(Radarr|Sonarr)\b/)?.[1];
-		return name ? { kind: name === "Radarr" ? "movie" : "series", init: init.src } : null;
+		const name = document
+			.querySelector('meta[name="description"]')
+			?.content?.trim()
+			.match(/^(Radarr|Sonarr)$/)?.[1];
+		if (!name) return null;
+		const base =
+			Array.from(document.querySelectorAll("script:not([src])"), (script) =>
+				script.textContent.match(/window\.(?:Radarr|Sonarr)\s*=\s*\{\s*urlBase:\s*['"]([^'"]*)['"]/)
+			).find(Boolean)?.[1] ??
+			// Older builds name it in the initialize.js address instead.
+			new URL(
+				document.querySelector('script[src*="initialize.js"]')?.src ?? location.href
+			).pathname.replace(/\/initialize\.js$/, "").replace(/\/$/, "");
+		return { kind: name === "Radarr" ? "movie" : "series", base };
 	}
 
 	let arrConfig;
 	/**
-	 * GET a path of the app's API with the key its own page uses. The key is
+	 * GET a path of the app's API with the key its own page uses. The key comes
+	 * from initialize.json (newer builds) or initialize.js (older ones) and is
 	 * read once; a failed read is forgotten so the next call retries it.
-	 * @param {{init: string}} app
+	 * @param {{base: string}} app
 	 * @param {string} path API path such as "/series"
 	 * @returns {Promise<any>} the parsed JSON, or null for a non-OK answer
 	 */
 	function arrApi(app, path) {
-		arrConfig ??= fetch(app.init)
-			.then((res) => {
-				if (!res.ok) throw new Error(`initialize.js: ${res.status}`);
-				return res.text();
-			})
-			.then((js) => ({
-				apiKey: js.match(/apiKey:\s*['"]([^'"]*)['"]/)?.[1],
-				apiRoot:
-					js.match(/apiRoot:\s*['"]([^'"]*)['"]/)?.[1] ??
-					new URL(app.init).pathname.replace(/\/initialize\.js$/, "") + "/api/v3",
-			}))
+		const read = (re, js) => js.match(re)?.[1];
+		arrConfig ??= fetch(`${app.base}/initialize.json`)
+			.then((res) => (res.ok ? res.json() : null))
+			.catch(() => null)
+			.then(
+				(json) =>
+					json ??
+					fetch(`${app.base}/initialize.js`)
+						.then((res) => {
+							if (!res.ok) throw new Error(`initialize: ${res.status}`);
+							return res.text();
+						})
+						.then((js) => ({
+							apiKey: read(/apiKey:\s*['"]([^'"]*)['"]/, js),
+							apiRoot: read(/apiRoot:\s*['"]([^'"]*)['"]/, js),
+						}))
+			)
+			.then(({ apiKey, apiRoot }) => ({ apiKey, apiRoot: apiRoot ?? `${app.base}/api/v3` }))
 			.catch((error) => {
 				arrConfig = undefined;
 				throw error;
@@ -582,9 +599,10 @@
 	}
 
 	/**
-	 * The heading that shows a title: the app's class names are hashed and its
-	 * IMDb links sit behind a "Links" button, so find the visible element whose
-	 * own text is the title the API gave.
+	 * Where a title page takes its button: after the run years under the
+	 * heading, else on the heading. The app's class names are hashed and its
+	 * IMDb links sit behind a "Links" button, so the heading is the visible
+	 * element whose own text is the title the API gave.
 	 * @param {string|undefined} title
 	 * @returns {Element|undefined}
 	 */
@@ -596,8 +614,19 @@
 				.map((node) => node.textContent)
 				.join("")
 				.trim();
-		return Array.from(document.querySelectorAll("div, span, h1, h2")).find(
-			(el) => el.getClientRects().length && ownText(el) === title
+		const shown = Array.from(document.querySelectorAll("div, span, h1, h2")).filter((el) =>
+			el.getClientRects().length
+		);
+		const heading = shown.find((el) => ownText(el) === title);
+		const years = /^(?:19|20)\d\d(?:\s*[-\u2013]\s*(?:(?:19|20)\d\d)?)?$/;
+		return (
+			shown.find(
+				(el) =>
+					heading &&
+					heading.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING &&
+					!heading.contains(el) &&
+					years.test(ownText(el))
+			) ?? heading
 		);
 	}
 
